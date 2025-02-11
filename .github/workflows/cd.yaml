@@ -1,0 +1,56 @@
+name: CD
+
+on:
+  push:
+    tags:
+      - "*"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: nodescriptlang/relay-service
+
+jobs:
+  build:
+    name: Build Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Extract TAG env
+        run: |
+          ref="${{ github.ref }}"
+          echo "TAG=${ref/refs\/tags\//}" >> $GITHUB_ENV
+
+      - name: Login to the Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push image
+        uses: docker/build-push-action@v2
+        with:
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:${{ env.TAG }},${{ env.REGISTRY }}/${{ env.IMAGE_NAME}}:latest
+          file: Dockerfile
+          push: true
+          build-args: |
+            VERSION=${{ env.TAG }}
+          labels: |
+            source-url=https://github.com/${{ github.repository }}
+
+
+  deploy-production:
+    needs: build
+    uses: NodeScriptLang/github-actions/.github/workflows/ci-deploy.yaml@main
+    with:
+      gh_user: NodeScriptLang
+      gh_repo: infrastructure
+      image_name: relay-service
+      env_name: production
+      app_path: apps/relay-service
+      auto_merge: true
+    secrets:
+      ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}

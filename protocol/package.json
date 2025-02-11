@@ -1,0 +1,22 @@
+{
+    "name": "@nodescript/relay-protocol",
+    "version": "1.7.0",
+    "description": "Relay Protocol",
+    "type": "module",
+    "sideEffects": false,
+    "exports": {
+        ".": "./out/index.js"
+    },
+    "main": "./out/index.js",
+    "types": "./out/index.d.ts",
+    "files": [
+        "out/**/*"
+    ],
+    "scripts": {
+        "clean": "rm -rf out *.tsbuildinfo"
+    },
+    "dependencies": {
+        "@nodescript/protocomm": "^1.0.0",
+        "airtight": "^5.7.0"
+    }
+}

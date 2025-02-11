@@ -1,0 +1,9 @@
+{
+    "name": "@nodescript/relay-service-nodes",
+    "version": "1.0.1",
+    "description": "Relay Nodes",
+    "private": true,
+    "type": "module",
+    "author": "NodeScript",
+    "license": "ISC"
+}
