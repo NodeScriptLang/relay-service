@@ -69,8 +69,9 @@
         "airtight": "^5.7.2",
         "ioredis": "^5.4.1",
         "jsonwebtoken": "^9.0.2",
-        "mesh-config": "^1.1.2",
-        "mesh-ioc": "^3.3.1",
+        "mesh-config": "^1.2.1",
+        "mesh-decorators": "^1.1.2",
+        "mesh-ioc": "^4.1.0",
         "mongodb": "^6.10.0"
     }
 }
