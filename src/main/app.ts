@@ -1,6 +1,8 @@
 import { AuxHttpServer, BaseApp, JwtService } from '@nodescript/microframework';
 import { dep, Mesh } from 'mesh-ioc';
 
+import { AiStorage } from './global/ai/AiStorage.js';
+import { MongoAiStorage } from './global/ai/AiStorage.mongo.js';
 import { MainHttpServer } from './global/MainHttpServer.js';
 import { Metrics } from './global/Metrics.js';
 import { MongoDb } from './global/MongoDb.js';
@@ -12,10 +14,11 @@ export class App extends BaseApp {
     @dep() private redis!: RedisManager;
     @dep() private mainHttpServer!: MainHttpServer;
     @dep() private auxHttpServer!: AuxHttpServer;
-
+    @dep() private aiStorage!: AiStorage;
     constructor() {
         super(new Mesh('App'));
         this.mesh.service(AuxHttpServer);
+        this.mesh.service(AiStorage, MongoAiStorage);
         this.mesh.service(JwtService);
         this.mesh.service(MainHttpServer);
         this.mesh.service(Metrics);
@@ -27,6 +30,7 @@ export class App extends BaseApp {
         await super.start();
         await this.mongodb.start();
         await this.redis.start();
+        await this.aiStorage.setup();
         await this.mainHttpServer.start();
         await this.auxHttpServer.start();
     }
