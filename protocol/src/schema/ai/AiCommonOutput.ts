@@ -12,16 +12,21 @@ export interface AiCommonOutput {
 }
 
 export const AiCommonOutputSchema = new Schema<AiCommonOutput>({
-    content: { type: 'string' },
-    totalTokens: { type: 'number' },
-    model: { type: 'string' },
-    aiVendor: { ...AiVendorSchema.schema },
-    cost: {
-        type: 'number',
-        nullable: true,
-    },
-    metadata: {
-        type: 'object',
-        nullable: true,
-    },
+    type: 'object',
+    properties: {
+        content: { type: 'string' },
+        totalTokens: { type: 'number' },
+        model: { type: 'string' },
+        aiVendor: AiVendorSchema.schema,
+        cost: {
+            type: 'number',
+            optional: true,
+        },
+        metadata: {
+            type: 'object',
+            properties: {},
+            additionalProperties: { type: 'any' },
+            optional: true,
+        },
+    }
 });

@@ -12,19 +12,22 @@ export interface AiCommonInput {
 }
 
 export const AiCommonInputSchema = new Schema<AiCommonInput>({
-    model: { type: 'string' },
-    prompt: { type: 'number' },
-    aiVendor: { ...AiVendorSchema.schema },
-    maxTokens: {
-        type: 'number',
-        nullable: true,
-    },
-    temperature: {
-        type: 'number',
-        nullable: true,
-    },
-    topP: {
-        type: 'number',
-        nullable: true,
-    },
+    type: 'object',
+    properties: {
+        model: { type: 'string' },
+        prompt: { type: 'number' },
+        aiVendor: AiVendorSchema.schema,
+        maxTokens: {
+            type: 'number',
+            optional: true,
+        },
+        temperature: {
+            type: 'number',
+            optional: true,
+        },
+        topP: {
+            type: 'number',
+            optional: true,
+        },
+    }
 });

@@ -17,19 +17,25 @@ export interface AiTransaction {
 }
 
 export const AiTransactionSchema = new Schema<AiTransaction>({
-    id: { ...IdSchema.schema },
-    orgId: { ...IdSchema.schema },
-    workspaceId: { ...IdSchema.schema },
-    aiVendor: { ...AiVendorSchema.schema },
-    model: { type: 'string' },
-    totalTokens: { type: 'number' },
-    cost: {
-        type: 'number',
-        optional: true
-    },
-    metadata: {
-        type: 'object',
-        optional: true
-    },
-    createdAt: { type: 'number' },
+    type: 'object',
+    properties: {
+        id: IdSchema.schema,
+        orgId: IdSchema.schema,
+        workspaceId: IdSchema.schema,
+        aiVendor: AiVendorSchema.schema,
+        model: { type: 'string' },
+        totalTokens: { type: 'number' },
+        cost: {
+            type: 'number',
+            optional: true
+        },
+        metadata: {
+            type: 'object',
+            properties: {},
+            additionalProperties: { type: 'any' },
+            optional: true,
+        },
+        createdAt: { type: 'number' },
+    }
+
 });
