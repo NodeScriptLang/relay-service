@@ -1,4 +1,4 @@
-import { ApiProtocol, apiProtocol, Workspace } from '@nodescript/api-proto';
+import { ApiProtocol, apiProtocol, Org, Workspace } from '@nodescript/api-proto';
 import { HttpContext } from '@nodescript/http-server';
 import { createHttpClient } from '@nodescript/protocomm';
 import { config } from 'mesh-config';
@@ -17,7 +17,7 @@ export class NodeScriptApi {
         return workspace;
     }
 
-    async getOrg(orgId: string): Promise<Workspace> {
+    async getOrg(orgId: string): Promise<Org> {
         const client = this.createClient();
         const { org } = await client.Org.getOrgById({ id: orgId });
         return org;
