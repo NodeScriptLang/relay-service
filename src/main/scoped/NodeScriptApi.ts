@@ -17,6 +17,12 @@ export class NodeScriptApi {
         return workspace;
     }
 
+    async getOrg(orgId: string): Promise<Workspace> {
+        const client = this.createClient();
+        const { org } = await client.Org.getOrgById({ id: orgId });
+        return org;
+    }
+
     protected createClient(): ApiProtocol {
         return createHttpClient(apiProtocol, {
             baseUrl: this.NODESCRIPT_API_URL,

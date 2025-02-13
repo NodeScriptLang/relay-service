@@ -1,7 +1,7 @@
 {
     "name": "@nodescript/relay-service",
     "version": "1.7.0",
-    "description": "NodeScript Cache Service",
+    "description": "NodeScript Relay Service",
     "type": "module",
     "sideEffects": false,
     "exports": {
