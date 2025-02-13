@@ -1,4 +1,4 @@
-FROM node:20.18-slim as builder
+FROM node:20.11-slim as builder
 
 WORKDIR /builder
 COPY . ./
@@ -7,7 +7,7 @@ RUN npm ci && npm run build && rm -rf node_modules
 
 ##################################################
 
-FROM node:20.18-slim
+FROM node:20.11-slim
 
 ENV NODE_ENV production
 
@@ -19,4 +19,4 @@ COPY --from=builder /builder .
 RUN npm ci --production
 
 WORKDIR /app
-CMD ["node", "out/bin/run.js"]
+CMD ["node", "out/bin/http.js"]

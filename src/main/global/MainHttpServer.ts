@@ -1,18 +1,35 @@
-import { HttpContext, HttpNext, HttpServer } from '@nodescript/http-server';
-import { dep, Mesh } from 'mesh-ioc';
+import { HttpChain, HttpContext, HttpCorsHandler, HttpErrorHandler, HttpHandler, HttpMetricsHandler, HttpNext, HttpServer, HttpStatusHandler } from '@nodescript/http-server';
+import { dep } from 'mesh-ioc';
 
-import { HttpScope } from '../HttpScope.js';
-import { MainHttpHandler } from '../scoped/MainHttpHandler.js';
+import { FetchHandler } from './FetchHandler.js';
 
 export class MainHttpServer extends HttpServer {
 
-    @dep() private mesh!: Mesh;
+    @dep() private errorHandler!: HttpErrorHandler;
+    @dep() private corsHandler!: HttpCorsHandler;
+    @dep() private metricsHandler!: HttpMetricsHandler;
+    @dep() private statusHandler!: HttpStatusHandler;
+    @dep() private forwardRequestHandler!: FetchHandler;
+
+    private corsConfigHandler: HttpHandler = {
+        async handle(ctx, next) {
+            ctx.state.corsExposeHeaders = 'Content-Length,Date,X-Fetch-Status,X-Fetch-Headers';
+            ctx.state.corsAllowCredentials = false;
+            await next();
+        },
+    };
+
+    private handler = new HttpChain([
+        this.errorHandler,
+        this.metricsHandler,
+        this.statusHandler,
+        this.corsConfigHandler,
+        this.corsHandler,
+        this.forwardRequestHandler,
+    ]);
 
     async handle(ctx: HttpContext, next: HttpNext) {
-        const scope = new HttpScope(this.mesh);
-        scope.constant(HttpContext, ctx);
-        const handler = scope.resolve(MainHttpHandler);
-        await handler.handle(ctx, next);
+        await this.handler.handle(ctx, next);
     }
 
 }

@@ -9,22 +9,13 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    services:
-      mongo:
-        image: mongo:latest
-        ports:
-          - 27017:27017
-      redis:
-        image: redis:latest
-        ports:
-          - 6379:6379
     steps:
     - name: checkout
       uses: actions/checkout@v2
-    - name: nvm use v20
+    - name: nvm use v18
       uses: actions/setup-node@v2
       with:
-        node-version: 20.18.0
+        node-version: '18'
     - run: npm ci
     - run: npm run lint
     - run: npm run compile

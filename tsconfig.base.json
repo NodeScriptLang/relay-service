@@ -16,7 +16,7 @@
         "checkJs": false,
         "useDefineForClassFields": false,
         "lib": [
-            "ES2023"
+            "ES2020"
         ]
     }
 }
