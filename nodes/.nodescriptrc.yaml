@@ -1,3 +1,0 @@
-modules:
-  - pattern: src/nodes/**/*.ts
-    sourceUrl: https://github.com/NodeScriptLang/relay-service/blob/main/nodes/{file}

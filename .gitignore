@@ -5,3 +5,8 @@ node_modules/
 out/
 .tmp*
 *.tsbuildinfo
+
+.env*
+!.env.example
+!.env.test
+!.env.dev
