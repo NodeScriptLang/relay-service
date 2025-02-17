@@ -34,7 +34,7 @@ export class RelayHandler extends HttpRouter {
     }>('nodescript_relay_service_errors_total', 'NodeScript Relay Service errors');
 
     routes: HttpRoute[] = [
-        ['POST', `/`, ctx => this.handleRequest(ctx)],
+        ['POST', `/relay`, ctx => this.handleRequest(ctx)],
     ];
 
     async handleRequest(ctx: HttpContext) {
