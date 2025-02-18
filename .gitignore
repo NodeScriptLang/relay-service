@@ -10,3 +10,5 @@ out/
 !.env.example
 !.env.test
 !.env.dev
+
+secrets/development/*
