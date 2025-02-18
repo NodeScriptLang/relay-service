@@ -4,9 +4,8 @@ import { fetchUndici } from '@nodescript/fetch-undici';
 import { HttpContext, HttpRoute, HttpRouter } from '@nodescript/http-server';
 import { Logger } from '@nodescript/logger';
 import { CounterMetric, HistogramMetric, metric } from '@nodescript/metrics';
+import { readFile } from 'fs/promises';
 import { dep } from 'mesh-ioc';
-
-import { parseJson } from '../util.js';
 
 export class RelayHandler extends HttpRouter {
 
@@ -34,23 +33,17 @@ export class RelayHandler extends HttpRouter {
     }>('nodescript_relay_service_errors_total', 'NodeScript Relay Service errors');
 
     routes: HttpRoute[] = [
-        ['POST', `/relay`, ctx => this.handleRequest(ctx)],
+        ['*', `/*`, ctx => this.handleRequest(ctx)],
     ];
 
     async handleRequest(ctx: HttpContext) {
         try {
-            const req = this.parseRequestSpec(ctx);
-            // Handle special case where content-type is set in the header by the browser
-            const contentType = ctx.getRequestHeader('content-type');
-            if (contentType && !req.headers['content-type']) {
-                req.headers['content-type'] = contentType;
-            }
+            const req = await this.parseRequestSpec(ctx);
             const res = await fetchUndici(req, ctx.request);
-            ctx.status = 200;
-            ctx.addResponseHeaders({
-                'x-fetch-status': [String(res.status)],
-                'x-fetch-headers': [JSON.stringify(res.headers)],
-            });
+            ctx.status = res.status;
+            ctx.responseHeaders = Object.fromEntries(
+                Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
+            );
             ctx.responseBody = res.body;
             const size = Number(res.headers['content-length']) || 0;
             this.logger.info('Request served', {
@@ -78,15 +71,62 @@ export class RelayHandler extends HttpRouter {
         }
     }
 
-    private parseRequestSpec(ctx: HttpContext): FetchRequestSpec {
+    async readConfig() {
+        const env = process.env.NODE_ENV || 'development';
+        let configJson: Record<string, any> = {};
+        if (env === 'production') {
+            try {
+                configJson = JSON.parse(await readFile(`./secrets/production/config.json`, 'utf-8'));
+            } catch (error) {
+                console.error('Failed to decrypt key file');
+                console.error(error);
+                process.exit(1);
+            }
+        } else if (env === 'development') {
+            configJson = JSON.parse(await readFile(`./secrets/development/config.json`, 'utf-8'));
+        } else {
+            throw new Error(`NODE_ENV not set`);
+        }
+        return configJson;
+    }
+
+    async parseUrl(ctx: HttpContext) {
+        const configJson = await this.readConfig();
+        const pathParts = ctx.path.split('/');
+        const vendor = pathParts[1];
+        if (!configJson[vendor]) {
+            throw new Error(`Unsupported vendor: ${vendor}`);
+        }
+        const vendorConfig = configJson[vendor];
+        const baseUrl = vendorConfig.baseUrl.replace(/\/$/, '');
+        const remainingPath = pathParts.slice(2).join('/');
+
+        const fullUrl = `${baseUrl}/${remainingPath}`;
+
+        return new URL(fullUrl);
+    }
+
+    private async parseRequestSpec(ctx: HttpContext): Promise<FetchRequestSpec> {
+        const targetUrl = await this.parseUrl(ctx);
+
+        const headers = { ...ctx.requestHeaders };
+        delete headers['host'];
+        delete headers['connection'];
+        delete headers['content-length'];
+
+        const config = await this.readConfig();
+        const vendor = ctx.path.split('/')[1];
+        if (config[vendor]?.key) {
+            headers['authorization'] = [`Bearer ${config[vendor].key}`];
+        }
+
         return FetchRequestSpecSchema.create({
-            method: ctx.getRequestHeader('x-fetch-method') as FetchMethod,
-            url: ctx.getRequestHeader('x-fetch-url'),
-            headers: parseJson(ctx.getRequestHeader('x-fetch-headers'), {}),
-            followRedirects: ctx.getRequestHeader('x-fetch-follow-redirects') !== 'false',
-            proxy: ctx.getRequestHeader('x-fetch-proxy', '') || undefined,
-            timeout: Number(ctx.getRequestHeader('x-fetch-timeout', '')) || undefined,
-            connectOptions: parseJson(ctx.getRequestHeader('x-fetch-connect-options', ''), {}),
+            method: ctx.method as FetchMethod,
+            url: targetUrl.toString(),
+            headers,
+            followRedirects: true,
+            timeout: 30000,
+            connectOptions: {},
         });
     }
 
