@@ -4,9 +4,12 @@ import { fetchUndici } from '@nodescript/fetch-undici';
 import { HttpContext, HttpRoute, HttpRouter } from '@nodescript/http-server';
 import { Logger } from '@nodescript/logger';
 import { CounterMetric, HistogramMetric, metric } from '@nodescript/metrics';
+import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
 export class RelayHandler extends HttpRouter {
+
+    @config() SERVICE_PROVIDERS!: string;
 
     @dep() private logger!: Logger;
 
@@ -75,7 +78,7 @@ export class RelayHandler extends HttpRouter {
     }
 
     async readConfig() {
-        return JSON.parse(process.env.SERVICE_PROVIDERS || '{}');
+        return JSON.parse(this.SERVICE_PROVIDERS || process.env.SERVICE_PROVIDERS || '{}');
     }
 
     async parseUrl(ctx: HttpContext) {
