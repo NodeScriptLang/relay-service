@@ -53,4 +53,4 @@ jobs:
       app_path: apps/relay-service
       auto_merge: true
     secrets:
-      ACCESS_TOKEN: ${{ secrets.ACCESS_TOKEN }}
+      ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
