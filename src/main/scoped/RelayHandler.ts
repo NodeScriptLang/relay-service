@@ -4,7 +4,6 @@ import { fetchUndici } from '@nodescript/fetch-undici';
 import { HttpContext, HttpRoute, HttpRouter } from '@nodescript/http-server';
 import { Logger } from '@nodescript/logger';
 import { CounterMetric, HistogramMetric, metric } from '@nodescript/metrics';
-import { readFile } from 'fs/promises';
 import { dep } from 'mesh-ioc';
 
 export class RelayHandler extends HttpRouter {
@@ -76,22 +75,7 @@ export class RelayHandler extends HttpRouter {
     }
 
     async readConfig() {
-        const env = process.env.NODE_ENV || 'development';
-        let configJson: Record<string, any> = {};
-        if (env === 'production') {
-            try {
-                configJson = JSON.parse(await readFile(`./secrets/production/config.json`, 'utf-8'));
-            } catch (error) {
-                console.error('Failed to decrypt key file');
-                console.error(error);
-                process.exit(1);
-            }
-        } else if (env === 'development') {
-            configJson = JSON.parse(await readFile(`./secrets/development/config.json`, 'utf-8'));
-        } else {
-            throw new Error(`NODE_ENV not set`);
-        }
-        return configJson;
+        return JSON.parse(process.env.CONFIG || '{}');
     }
 
     async parseUrl(ctx: HttpContext) {

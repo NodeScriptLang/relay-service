@@ -6,9 +6,7 @@ out/
 .tmp*
 *.tsbuildinfo
 
-.env*
+.env
+.env.dev
 !.env.example
 !.env.test
-!.env.dev
-
-secrets/development/*
