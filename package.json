@@ -1,6 +1,6 @@
 {
     "name": "@nodescript/relay-service",
-    "version": "1.7.0",
+    "version": "1.7.5",
     "description": "NodeScript Relay Service",
     "type": "module",
     "sideEffects": false,
@@ -28,7 +28,6 @@
         "build": "run-s compile",
         "version": "run-s version:*",
         "version:compile": "npm run compile",
-        "version:workspaces": "npm exec --workspaces -- npm version $npm_package_version && git add .",
         "postversion": "git push --tags origin main",
         "publish:nodes": "cd nodes && nodescript publish"
     },
@@ -43,20 +42,18 @@
     "author": "Boris Okunskiy",
     "license": "ISC",
     "devDependencies": {
-        "@nodescript/cli": "^1.9.0",
         "@nodescript/eslint-config": "^2.0.1",
-        "@types/mocha": "^8.2.3",
+        "@types/mocha": "^10.0.10",
         "@types/node": "^18.19.23",
         "dotenv": "^16.4.5",
         "eslint": "^9.13.0",
-        "mocha": "^9.2.2",
+        "mocha": "^11.1.0",
         "npm-run-all": "^4.1.5",
-        "pre-commit": "^1.2.2",
+        "pre-commit": "^1.0.10",
         "typescript": "^5.5.3"
     },
     "dependencies": {
         "@nodescript/api-proto": "^5.48.2",
-        "@nodescript/relay-protocol": "file:./protocol",
         "@nodescript/core": "^7.21.3",
         "@nodescript/errors": "^1.2.0",
         "@nodescript/fetch-undici": "^1.4.0",
