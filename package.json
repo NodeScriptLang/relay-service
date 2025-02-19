@@ -1,6 +1,6 @@
 {
     "name": "@nodescript/relay-service",
-    "version": "1.7.1",
+    "version": "1.7.2",
     "description": "NodeScript Relay Service",
     "type": "module",
     "sideEffects": false,
@@ -28,7 +28,6 @@
         "build": "run-s compile",
         "version": "run-s version:*",
         "version:compile": "npm run compile",
-        "version:workspaces": "npm exec --workspaces -- npm version $npm_package_version && git add .",
         "postversion": "git push --tags origin main",
         "publish:nodes": "cd nodes && nodescript publish"
     },
@@ -63,7 +62,6 @@
         "@nodescript/metrics": "^1.5.0",
         "@nodescript/microframework": "^1.13.1",
         "@nodescript/protocomm": "^1.1.0",
-        "@nodescript/relay-protocol": "file:./protocol",
         "@types/jsonwebtoken": "^9.0.7",
         "airtight": "^5.7.2",
         "ioredis": "^5.4.1",
