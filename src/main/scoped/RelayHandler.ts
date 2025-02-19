@@ -38,8 +38,12 @@ export class RelayHandler extends HttpRouter {
 
     async handleRequest(ctx: HttpContext) {
         try {
+            const body = await ctx.readRequestBody();
+            const bodyString = body ? JSON.stringify(body) : undefined;
+
             const req = await this.parseRequestSpec(ctx);
-            const res = await fetchUndici(req, ctx.request);
+            const res = await fetchUndici(req, bodyString);
+
             ctx.status = res.status;
             ctx.responseHeaders = Object.fromEntries(
                 Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
