@@ -39,4 +39,4 @@ CONFIG='{
 
 ### Production:
 
-For production, we set the CONFIG environment variable as a secret in `relay-secrets.yaml` and we use Sops for encryption. For more info on Sops. Check out the `infrastructure` repo README.md
+For production, we set the CONFIG environment variable as a secret in `relay-secrets.yaml` and we use Sops for encryption. For more info on Sops. Check out the `infrastructure` repo [README.md](https://github.com/NodeScriptLang/infrastructure/blob/main/README.md)

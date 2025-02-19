@@ -75,7 +75,7 @@ export class RelayHandler extends HttpRouter {
     }
 
     async readConfig() {
-        return JSON.parse(process.env.CONFIG || '{}');
+        return JSON.parse(process.env.SERVICE_PROVIDERS || '{}');
     }
 
     async parseUrl(ctx: HttpContext) {
