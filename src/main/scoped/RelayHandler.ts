@@ -4,6 +4,7 @@ import { fetchUndici } from '@nodescript/fetch-undici';
 import { HttpContext, HttpRoute, HttpRouter } from '@nodescript/http-server';
 import { Logger } from '@nodescript/logger';
 import { CounterMetric, HistogramMetric, metric } from '@nodescript/metrics';
+import { Schema } from 'airtight';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
@@ -35,7 +36,7 @@ export class RelayHandler extends HttpRouter {
     }>('nodescript_relay_service_errors_total', 'NodeScript Relay Service errors');
 
     routes: HttpRoute[] = [
-        ['*', `/*`, ctx => this.handleRequest(ctx)],
+        ['*', `/{providerId}/*`, ctx => this.handleRequest(ctx)],
     ];
 
     async handleRequest(ctx: HttpContext) {
@@ -77,46 +78,42 @@ export class RelayHandler extends HttpRouter {
         }
     }
 
-    async readConfig() {
-        return JSON.parse(this.SERVICE_PROVIDERS || process.env.SERVICE_PROVIDERS || '{}');
+    async readProviderConfig() {
+        return ServiceProvidersSchema.decode(JSON.parse(this.SERVICE_PROVIDERS)) || '{}';
     }
 
-    async parseUrl(ctx: HttpContext) {
-        const configJson = await this.readConfig();
-        const pathParts = ctx.path.split('/');
-        const vendor = pathParts[1];
-        if (!configJson[vendor]) {
-            throw new Error(`Unsupported vendor: ${vendor}`);
-        }
-        const vendorConfig = configJson[vendor];
-        const baseUrl = vendorConfig.baseUrl.replace(/\/$/, '');
-        const remainingPath = pathParts.slice(2).join('/');
-
-        const fullUrl = `${baseUrl}/${remainingPath}`;
-
+    async parseUrl(providerInfo: ServiceProvider, path: string) {
+        const baseUrl = providerInfo.baseUrl.replace(/\/$/, '');
+        const fullUrl = `${baseUrl}/${path}`;
         return new URL(fullUrl);
     }
 
     private async parseRequestSpec(ctx: HttpContext): Promise<FetchRequestSpec> {
-        const targetUrl = await this.parseUrl(ctx);
+        const providersJson = await this.readProviderConfig();
+        const providerId = ctx.params.providerId;
+        const path = ctx.params['*'];
+        const providerInfo = providersJson[providerId];
+        if (!providerInfo) {
+            throw new Error(`Unsupported service provider: ${providerId}`);
+        }
+        const targetUrl = await this.parseUrl(providerInfo, path);
+        this.logger.info('Calling external service provider URL', { url: targetUrl.toString() });
 
         const headers = { ...ctx.requestHeaders };
         delete headers['host'];
         delete headers['connection'];
         delete headers['content-length'];
 
-        const config = await this.readConfig();
-        const vendor = ctx.path.split('/')[1];
-        if (config[vendor]?.key) {
-            headers['authorization'] = [`Bearer ${config[vendor].key}`];
+        if (providerInfo.key && providerInfo.authSchema === 'header') {
+            headers[`${providerInfo.authKey}`] = [`${providerInfo.useBearer ? 'Bearer ' : ''}${providerInfo.key}`];
         }
 
+        this.logger.info('Requesting external service provider', { providerId });
         return FetchRequestSpecSchema.create({
             method: ctx.method as FetchMethod,
             url: targetUrl.toString(),
             headers,
             followRedirects: true,
-            timeout: 30000,
             connectOptions: {},
         });
     }
@@ -131,3 +128,37 @@ export class RelayHandler extends HttpRouter {
     }
 
 }
+
+interface ServiceProvider {
+    id: string;
+    title: string;
+    baseUrl: string;
+    version: string;
+    authSchema: 'header' | 'query';
+    useBearer: boolean;
+    authKey: string;
+    key: string;
+}
+
+export const ServiceProviderSchema = new Schema<ServiceProvider>({
+    type: 'object',
+    properties: {
+        id: { type: 'string' },
+        title: { type: 'string' },
+        baseUrl: { type: 'string' },
+        version: { type: 'string' },
+        authSchema: {
+            type: 'string',
+            enum: ['header', 'query'],
+        },
+        useBearer: { type: 'boolean' },
+        authKey: { type: 'string' },
+        key: { type: 'string' },
+    },
+});
+
+const ServiceProvidersSchema = new Schema<Record<string, ServiceProvider>>({
+    type: 'object',
+    properties: {},
+    additionalProperties: ServiceProviderSchema.schema,
+});
