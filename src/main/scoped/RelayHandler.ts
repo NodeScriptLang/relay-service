@@ -104,8 +104,9 @@ export class RelayHandler extends HttpRouter {
         delete headers['connection'];
         delete headers['content-length'];
 
+        this.logger.info('Provider info', { authParamKey: providerInfo.authKey, useBearer: providerInfo.useBearer });
         if (providerInfo.key && providerInfo.authSchema === 'header') {
-            headers[`${providerInfo.authKey}`] = [`${providerInfo.useBearer ? 'Bearer ' : ''}${providerInfo.key}`];
+            headers[providerInfo.authKey] = [`${providerInfo.useBearer ? 'Bearer ' : ''}${providerInfo.key}`];
         }
 
         this.logger.info('Requesting external service provider', { providerId });
