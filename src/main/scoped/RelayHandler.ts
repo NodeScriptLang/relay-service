@@ -108,6 +108,9 @@ export class RelayHandler extends HttpRouter {
         if (providerInfo.key && providerInfo.authSchema === 'header') {
             headers[providerInfo.authKey] = [`${providerInfo.useBearer ? 'Bearer ' : ''}${providerInfo.key}`];
         }
+        if (providerInfo.key && providerInfo.authSchema === 'query') {
+            targetUrl.searchParams.append(providerInfo.authKey, providerInfo.key);
+        }
 
         this.logger.info('Requesting external service provider', { providerId });
         return FetchRequestSpecSchema.create({
