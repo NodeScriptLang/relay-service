@@ -111,6 +111,27 @@ export class RelayHandler extends HttpRouter {
         if (providerInfo.key && providerInfo.authSchema === 'query') {
             targetUrl.searchParams.append(providerInfo.authKey, providerInfo.key);
         }
+        if (providerInfo.metadata['headers']) {
+            const metadataHeaders = providerInfo.metadata['headers'];
+            for (const key in metadataHeaders) {
+                if (Object.prototype.hasOwnProperty.call(metadataHeaders, key)) {
+                    const value = metadataHeaders[key];
+                    headers[key] = [value];
+                }
+            }
+        }
+        if (providerInfo.metadata['queries']) {
+            const metadataQueries = providerInfo.metadata['queries'];
+            for (const key in metadataQueries) {
+                if (Object.prototype.hasOwnProperty.call(metadataQueries, key)) {
+                    const value = metadataQueries[key];
+                    targetUrl.searchParams.append(key, value);
+                }
+            }
+        }
+        // console.log('Headers', headers);
+        // console.log('Target URL', targetUrl.toString());
+        // console.log('Queries', targetUrl.searchParams.toString());
 
         this.logger.info('Requesting external service provider', { providerId });
         return FetchRequestSpecSchema.create({
@@ -142,6 +163,7 @@ interface ServiceProvider {
     useBearer: boolean;
     authKey: string;
     key: string;
+    metadata: Record<string, any>;
 }
 
 export const ServiceProviderSchema = new Schema<ServiceProvider>({
@@ -157,6 +179,11 @@ export const ServiceProviderSchema = new Schema<ServiceProvider>({
         },
         useBearer: { type: 'boolean' },
         authKey: { type: 'string' },
+        metadata: {
+            type: 'object',
+            properties: {},
+            additionalProperties: { type: 'any' },
+        },
         key: { type: 'string' },
     },
 });

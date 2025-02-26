@@ -16,7 +16,8 @@ export class MainHttpHandler implements HttpHandler {
     private corsConfigHandler: HttpHandler = {
         async handle(ctx, next) {
             ctx.state.corsExposeHeaders = 'Content-Length,Date,Status,Headers';
-            ctx.state.corsAllowCredentials = false;
+            ctx.state.corsAllowHeaders = 'Content-Type, Accept, x-api-key, anthropic-version';
+            ; ctx.state.corsAllowCredentials = true;
             await next();
         },
     };
