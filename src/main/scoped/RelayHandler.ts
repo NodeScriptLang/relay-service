@@ -1,5 +1,5 @@
 import { FetchRequestSpecSchema } from '@nodescript/core/schema';
-import { FetchMethod, FetchRequestSpec } from '@nodescript/core/types';
+import { FetchMethod, FetchRequestSpec, FetchResponseBody } from '@nodescript/core/types';
 import { fetchUndici } from '@nodescript/fetch-undici';
 import { HttpContext, HttpRoute, HttpRouter } from '@nodescript/http-server';
 import { Logger } from '@nodescript/logger';
@@ -43,15 +43,48 @@ export class RelayHandler extends HttpRouter {
         try {
             const body = await ctx.readRequestBody();
             const bodyString = body ? JSON.stringify(body) : undefined;
+            const providersConfig = await this.readProviderConfig();
+            const provider = providersConfig[ctx.params.providerId];
+            const req = await this.parseRequestSpec(ctx, provider);
 
-            const req = await this.parseRequestSpec(ctx);
-            const res = await fetchUndici(req, bodyString);
+            let res;
+            if (ctx.params.providerId === 'anthropic') {
+                const fetchHeaders: Record<string, string> = {};
+                for (const [key, value] of Object.entries(req.headers)) {
+                    fetchHeaders[key] = Array.isArray(value) ? value[0] : value;
+                }
+                const fetchResponse = await fetch(req.url, {
+                    method: req.method,
+                    headers: fetchHeaders,
+                    body: bodyString,
+                    redirect: req.followRedirects ? 'follow' : 'manual',
+                });
 
-            ctx.status = res.status;
-            ctx.responseHeaders = Object.fromEntries(
-                Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
-            );
-            ctx.responseBody = res.body;
+                ctx.status = fetchResponse.status;
+                ctx.responseHeaders = {};
+                fetchResponse.headers.forEach((value, key) => {
+                    ctx.responseHeaders[key] = [value];
+                });
+                delete ctx.responseHeaders['content-encoding'];
+
+                const responseBuffer = await fetchResponse.arrayBuffer();
+                ctx.responseBody = Buffer.from(responseBuffer);
+                res = {
+                    status: fetchResponse.status,
+                    headers: ctx.responseHeaders,
+                    body: {
+                        arrayBuffer: async () => responseBuffer,
+                    } as FetchResponseBody
+                };
+            } else {
+                res = await fetchUndici(req, bodyString);
+                ctx.status = res.status;
+                ctx.responseHeaders = Object.fromEntries(
+                    Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
+                );
+                ctx.responseBody = res.body;
+            }
+
             const size = Number(res.headers['content-length']) || 0;
             this.logger.info('Request served', {
                 url: req.url,
@@ -88,31 +121,30 @@ export class RelayHandler extends HttpRouter {
         return new URL(fullUrl);
     }
 
-    private async parseRequestSpec(ctx: HttpContext): Promise<FetchRequestSpec> {
-        const providersJson = await this.readProviderConfig();
+    private async parseRequestSpec(ctx: HttpContext, provider: ServiceProvider): Promise<FetchRequestSpec> {
         const providerId = ctx.params.providerId;
         const path = ctx.params['*'];
-        const providerInfo = providersJson[providerId];
-        if (!providerInfo) {
+        if (!provider) {
             throw new Error(`Unsupported service provider: ${providerId}`);
         }
-        const targetUrl = await this.parseUrl(providerInfo, path);
+        const targetUrl = await this.parseUrl(provider, path);
         this.logger.info('Calling external service provider URL', { url: targetUrl.toString() });
 
         const headers = { ...ctx.requestHeaders };
         delete headers['host'];
+        delete headers['authorization'];
         delete headers['connection'];
         delete headers['content-length'];
 
-        this.logger.info('Provider info', { authParamKey: providerInfo.authKey, useBearer: providerInfo.useBearer });
-        if (providerInfo.key && providerInfo.authSchema === 'header') {
-            headers[providerInfo.authKey] = [`${providerInfo.useBearer ? 'Bearer ' : ''}${providerInfo.key}`];
+        this.logger.info('Provider info', { authParamKey: provider.authKey, useBearer: provider.useBearer });
+        if (provider.key && provider.authSchema === 'header') {
+            headers[provider.authKey] = [`${provider.useBearer ? 'Bearer ' : ''}${provider.key}`];
         }
-        if (providerInfo.key && providerInfo.authSchema === 'query') {
-            targetUrl.searchParams.append(providerInfo.authKey, providerInfo.key);
+        if (provider.key && provider.authSchema === 'query') {
+            targetUrl.searchParams.append(provider.authKey, provider.key);
         }
-        if (providerInfo.metadata['headers']) {
-            const metadataHeaders = providerInfo.metadata['headers'];
+        if (provider.metadata['headers']) {
+            const metadataHeaders = provider.metadata['headers'];
             for (const key in metadataHeaders) {
                 if (Object.prototype.hasOwnProperty.call(metadataHeaders, key)) {
                     const value = metadataHeaders[key];
@@ -120,8 +152,8 @@ export class RelayHandler extends HttpRouter {
                 }
             }
         }
-        if (providerInfo.metadata['queries']) {
-            const metadataQueries = providerInfo.metadata['queries'];
+        if (provider.metadata['queries']) {
+            const metadataQueries = provider.metadata['queries'];
             for (const key in metadataQueries) {
                 if (Object.prototype.hasOwnProperty.call(metadataQueries, key)) {
                     const value = metadataQueries[key];
@@ -129,9 +161,6 @@ export class RelayHandler extends HttpRouter {
                 }
             }
         }
-        // console.log('Headers', headers);
-        // console.log('Target URL', targetUrl.toString());
-        // console.log('Queries', targetUrl.searchParams.toString());
 
         this.logger.info('Requesting external service provider', { providerId });
         return FetchRequestSpecSchema.create({
