@@ -48,7 +48,7 @@ export class RelayHandler extends HttpRouter {
             const req = await this.parseRequestSpec(ctx, provider);
 
             let res;
-            if (ctx.params.providerId === 'anthropic') {
+            if (provider.headersAllowArray) {
                 const fetchHeaders: Record<string, string> = {};
                 for (const [key, value] of Object.entries(req.headers)) {
                     fetchHeaders[key] = Array.isArray(value) ? value[0] : value;
@@ -192,6 +192,7 @@ interface ServiceProvider {
     useBearer: boolean;
     authKey: string;
     key: string;
+    headersAllowArray: boolean;
     metadata: Record<string, any>;
 }
 
@@ -208,12 +209,13 @@ export const ServiceProviderSchema = new Schema<ServiceProvider>({
         },
         useBearer: { type: 'boolean' },
         authKey: { type: 'string' },
+        key: { type: 'string' },
+        headersAllowArray: { type: 'boolean' },
         metadata: {
             type: 'object',
             properties: {},
             additionalProperties: { type: 'any' },
         },
-        key: { type: 'string' },
     },
 });
 
