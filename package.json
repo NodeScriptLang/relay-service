@@ -54,9 +54,9 @@
     },
     "dependencies": {
         "@nodescript/api-proto": "^5.48.2",
-        "@nodescript/core": "^7.21.3",
+        "@nodescript/core": "^7.24.0",
         "@nodescript/errors": "^1.2.0",
-        "@nodescript/fetch-undici": "^1.4.0",
+        "@nodescript/fetch-undici": "^1.4.3",
         "@nodescript/http-server": "^2.7.0",
         "@nodescript/logger": "^2.0.6",
         "@nodescript/metrics": "^1.5.0",
