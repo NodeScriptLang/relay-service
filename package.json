@@ -1,6 +1,6 @@
 {
     "name": "@nodescript/relay-service",
-    "version": "1.7.12",
+    "version": "1.7.13",
     "description": "NodeScript Relay Service",
     "type": "module",
     "sideEffects": false,
