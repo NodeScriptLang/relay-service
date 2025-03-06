@@ -16,7 +16,6 @@ CONFIG='{
         "id": "<module title lowercase>",
         "title": "<module title uppercase>",
         "baseUrl": "<base api url>",
-        "version": "v1",
         "authSchema": "header",
         "key": "<key>"
     }
@@ -30,7 +29,6 @@ CONFIG='{
         "id": "openai",
         "title": "OpenAI",
         "baseUrl": "https://api.openai.com/",
-        "version": "v1",
         "authSchema": "header",
         "key": "your-api-key"
     }
