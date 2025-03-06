@@ -187,7 +187,6 @@ interface ServiceProvider {
     id: string;
     title: string;
     baseUrl: string;
-    version: string;
     authSchema: 'header' | 'query';
     useBearer: boolean;
     authKey: string;
@@ -202,7 +201,6 @@ export const ServiceProviderSchema = new Schema<ServiceProvider>({
         id: { type: 'string' },
         title: { type: 'string' },
         baseUrl: { type: 'string' },
-        version: { type: 'string' },
         authSchema: {
             type: 'string',
             enum: ['header', 'query'],
