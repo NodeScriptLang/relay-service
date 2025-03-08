@@ -41,8 +41,12 @@ export class RelayHandler extends HttpRouter {
 
     async handleRequest(ctx: HttpContext) {
         try {
-            const body = await ctx.readRequestBody();
-            const bodyString = body ? JSON.stringify(body) : undefined;
+            const body = ctx.requestHeaders['content-type']?.includes('multipart/form-data') ?
+                await ctx.readRequestBody('raw') :
+                await ctx.readRequestBody();
+
+            const bodyString = body instanceof Buffer ? body : JSON.stringify(body);
+
             const providersConfig = await this.readProviderConfig();
             const provider = providersConfig[ctx.params.providerId];
             const req = await this.parseRequestSpec(ctx, provider);
@@ -56,7 +60,7 @@ export class RelayHandler extends HttpRouter {
                 const fetchResponse = await fetch(req.url, {
                     method: req.method,
                     headers: fetchHeaders,
-                    body: bodyString,
+                    body: ctx.requestHeaders['content-type']?.includes('multipart/form-data') ? body : bodyString,
                     redirect: req.followRedirects ? 'follow' : 'manual',
                 });
 
@@ -77,7 +81,7 @@ export class RelayHandler extends HttpRouter {
                     } as FetchResponseBody
                 };
             } else {
-                res = await fetchUndici(req, bodyString);
+                res = await fetchUndici(req, ctx.requestHeaders['content-type']?.includes('multipart/form-data') ? body : bodyString);
                 ctx.status = res.status;
                 ctx.responseHeaders = Object.fromEntries(
                     Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
@@ -134,7 +138,10 @@ export class RelayHandler extends HttpRouter {
         delete headers['host'];
         delete headers['authorization'];
         delete headers['connection'];
-        delete headers['content-length'];
+
+        if (!ctx.requestHeaders['content-type']?.includes('multipart/form-data')) {
+            delete headers['content-length'];
+        }
 
         this.logger.info('Provider info', { authParamKey: provider.authKey, useBearer: provider.useBearer });
         if (provider.key && provider.authSchema === 'header') {
