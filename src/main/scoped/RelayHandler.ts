@@ -1,5 +1,5 @@
 import { FetchRequestSpecSchema } from '@nodescript/core/schema';
-import { FetchMethod, FetchRequestSpec, FetchResponseBody } from '@nodescript/core/types';
+import { FetchMethod, FetchRequestSpec } from '@nodescript/core/types';
 import { fetchUndici } from '@nodescript/fetch-undici';
 import { HttpContext, HttpRoute, HttpRouter } from '@nodescript/http-server';
 import { Logger } from '@nodescript/logger';
@@ -49,44 +49,12 @@ export class RelayHandler extends HttpRouter {
             const provider = providersConfig[ctx.params.providerId];
             const req = await this.parseRequestSpec(ctx, provider);
 
-            let res;
-            // TODO r1 see if we can remove this branching; fetchUndici should be able to handle both cases
-            if (provider.headersAllowArray) {
-                const fetchHeaders: Record<string, string> = {};
-                for (const [key, value] of Object.entries(req.headers)) {
-                    fetchHeaders[key] = Array.isArray(value) ? value[0] : value;
-                }
-                const fetchResponse = await fetch(req.url, {
-                    method: req.method,
-                    headers: fetchHeaders,
-                    body: bodyString,
-                    redirect: req.followRedirects ? 'follow' : 'manual',
-                });
-
-                ctx.status = fetchResponse.status;
-                ctx.responseHeaders = {};
-                fetchResponse.headers.forEach((value, key) => {
-                    ctx.responseHeaders[key] = [value];
-                });
-                delete ctx.responseHeaders['content-encoding'];
-
-                const responseBuffer = await fetchResponse.arrayBuffer();
-                ctx.responseBody = Buffer.from(responseBuffer);
-                res = {
-                    status: fetchResponse.status,
-                    headers: ctx.responseHeaders,
-                    body: {
-                        arrayBuffer: async () => responseBuffer,
-                    } as FetchResponseBody
-                };
-            } else {
-                res = await fetchUndici(req, bodyString);
-                ctx.status = res.status;
-                ctx.responseHeaders = Object.fromEntries(
-                    Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
-                );
-                ctx.responseBody = res.body;
-            }
+            const res = await fetchUndici(req, bodyString);
+            ctx.status = res.status;
+            ctx.responseHeaders = Object.fromEntries(
+                Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
+            );
+            ctx.responseBody = res.body;
 
             const size = Number(res.headers['content-length']) || 0;
             this.logger.info('Request served', {
@@ -139,14 +107,12 @@ export class RelayHandler extends HttpRouter {
         delete headers['connection'];
         delete headers['content-length'];
 
-        this.logger.info('Provider info', { authParamKey: provider.authKey, useBearer: provider.useBearer });
-        if (provider.key && provider.authSchema === 'header') {
-            // TODO r1 see if we can get rid of useBearer (just include that into the value of the secret key)
-            // TODO r1 authKey and key are a bit confusing, could use some renaming
-            headers[provider.authKey] = [`${provider.useBearer ? 'Bearer ' : ''}${provider.key}`];
+        this.logger.info('Provider info', { authParamName: provider.authParamName });
+        if (provider.authToken && provider.authSchema === 'header') {
+            headers[provider.authParamName] = [`${provider.authToken}`];
         }
-        if (provider.key && provider.authSchema === 'query') {
-            targetUrl.searchParams.append(provider.authKey, provider.key);
+        if (provider.authToken && provider.authSchema === 'query') {
+            targetUrl.searchParams.append(provider.authParamName, provider.authToken);
         }
         if (provider.metadata['headers']) {
             const metadataHeaders = provider.metadata['headers'];
