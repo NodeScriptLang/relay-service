@@ -8,6 +8,8 @@ import { Schema } from 'airtight';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
+import { ServiceProvider, ServiceProviderSchema } from '../schema/ServiceProvider.js';
+
 export class RelayHandler extends HttpRouter {
 
     @config() SERVICE_PROVIDERS!: string;
@@ -182,40 +184,6 @@ export class RelayHandler extends HttpRouter {
     }
 
 }
-
-interface ServiceProvider {
-    id: string;
-    title: string;
-    baseUrl: string;
-    authSchema: 'header' | 'query';
-    useBearer: boolean;
-    authKey: string;
-    key: string;
-    headersAllowArray: boolean;
-    metadata: Record<string, any>;
-}
-
-export const ServiceProviderSchema = new Schema<ServiceProvider>({
-    type: 'object',
-    properties: {
-        id: { type: 'string' },
-        title: { type: 'string' },
-        baseUrl: { type: 'string' },
-        authSchema: {
-            type: 'string',
-            enum: ['header', 'query'],
-        },
-        useBearer: { type: 'boolean' },
-        authKey: { type: 'string' },
-        key: { type: 'string' },
-        headersAllowArray: { type: 'boolean' },
-        metadata: {
-            type: 'object',
-            properties: {},
-            additionalProperties: { type: 'any' },
-        },
-    },
-});
 
 const ServiceProvidersSchema = new Schema<Record<string, ServiceProvider>>({
     type: 'object',
