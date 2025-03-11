@@ -2,7 +2,6 @@ import { Schema } from 'airtight';
 
 export interface ServiceProvider {
     id: string;
-    title: string;
     baseUrl: string;
     authSchema: 'header' | 'query';
     useBearer: boolean;
@@ -16,7 +15,6 @@ export const ServiceProviderSchema = new Schema<ServiceProvider>({
     type: 'object',
     properties: {
         id: { type: 'string' },
-        title: { type: 'string' },
         baseUrl: { type: 'string' },
         authSchema: {
             type: 'string',

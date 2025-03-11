@@ -9,12 +9,15 @@ import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
 import { ServiceProvider, ServiceProviderSchema } from '../schema/ServiceProvider.js';
+import { TextReqParameters, TextReqParametersSchema } from '../schema/TextReqParameters.js';
+import { OpenaAiService } from '../services/OpenaAiService.js';
 
 export class RelayHandler extends HttpRouter {
 
     @config() SERVICE_PROVIDERS!: string;
 
     @dep() private logger!: Logger;
+    @dep() private openaAiService!: OpenaAiService;
 
     @metric()
     private requestLatency = new HistogramMetric<{
@@ -43,13 +46,12 @@ export class RelayHandler extends HttpRouter {
 
     async handleRequest(ctx: HttpContext) {
         try {
-            const body = await ctx.readRequestBody();
-            const bodyString = body ? JSON.stringify(body) : undefined;
+            const body = await this.formatRequestBody(ctx);
             const providersConfig = await this.readProviderConfig();
             const provider = providersConfig[ctx.params.providerId];
             const req = await this.parseRequestSpec(ctx, provider);
 
-            const res = await fetchUndici(req, bodyString);
+            const res = await fetchUndici(req, body);
             ctx.status = res.status;
             ctx.responseHeaders = Object.fromEntries(
                 Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
@@ -150,6 +152,28 @@ export class RelayHandler extends HttpRouter {
         } catch (_err) {
             return '<invalid url>';
         }
+    }
+
+    private async formatRequestBody(ctx: HttpContext) {
+        const providerId = ctx.params.providerId;
+        const modelType = ctx.params.modelType;
+
+        const body = await ctx.readRequestBody();
+        const bodyString = body ? JSON.stringify(body) : undefined;
+        const textReqParameters = TextReqParametersSchema.decode(bodyString);
+
+        const serviceProvidersFormatters: Record<string, Record<string, (params: TextReqParameters) => Record<string, any>>> = {
+            openai: {
+                text: (params: TextReqParameters) => this.openaAiService.formatTextRequestBody(params),
+            },
+            // TODO add rest of service providers
+            anthropic: {
+                // anthropic formatters
+            },
+            // other providers...
+        };
+
+        return serviceProvidersFormatters[providerId]?.[modelType]?.(textReqParameters) || bodyString;
     }
 
 }
