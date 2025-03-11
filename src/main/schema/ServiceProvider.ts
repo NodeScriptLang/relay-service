@@ -6,8 +6,8 @@ export interface ServiceProvider {
     baseUrl: string;
     authSchema: 'header' | 'query';
     useBearer: boolean;
-    authKey: string;
-    key: string;
+    authParamName: string;
+    authToken: string;
     headersAllowArray: boolean;
     metadata: Record<string, any>;
 }
@@ -23,8 +23,8 @@ export const ServiceProviderSchema = new Schema<ServiceProvider>({
             enum: ['header', 'query'],
         },
         useBearer: { type: 'boolean' },
-        authKey: { type: 'string' },
-        key: { type: 'string' },
+        authParamName: { type: 'string' },
+        authToken: { type: 'string' },
         headersAllowArray: { type: 'boolean' },
         metadata: {
             type: 'object',
