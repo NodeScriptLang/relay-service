@@ -1,4 +1,4 @@
-import { HttpChain, HttpContext, HttpCorsHandler, HttpErrorHandler, HttpHandler, HttpMetricsHandler, HttpNext, HttpStatusHandler } from '@nodescript/http-server';
+import { HttpChain, HttpContext, HttpCorsHandler, HttpErrorHandler, HttpHandler, HttpNext } from '@nodescript/http-server';
 import { dep } from 'mesh-ioc';
 
 import { HttpAuthHandler } from './HttpAuthHandler.js';
@@ -9,8 +9,6 @@ export class MainHttpHandler implements HttpHandler {
     @dep() private errorHandler!: HttpErrorHandler;
     @dep() private authHandler!: HttpAuthHandler;
     @dep() private corsHandler!: HttpCorsHandler;
-    @dep() private metricsHandler!: HttpMetricsHandler;
-    @dep() private statusHandler!: HttpStatusHandler;
     @dep() private relayHandler!: RelayHandler;
 
     private corsConfigHandler: HttpHandler = {
@@ -23,8 +21,6 @@ export class MainHttpHandler implements HttpHandler {
 
     private handler = new HttpChain([
         this.errorHandler,
-        this.metricsHandler,
-        this.statusHandler,
         this.authHandler,
         this.corsConfigHandler,
         this.corsHandler,

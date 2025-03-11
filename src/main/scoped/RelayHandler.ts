@@ -50,6 +50,7 @@ export class RelayHandler extends HttpRouter {
             const req = await this.parseRequestSpec(ctx, provider);
 
             let res;
+            // TODO r1 see if we can remove this branching; fetchUndici should be able to handle both cases
             if (provider.headersAllowArray) {
                 const fetchHeaders: Record<string, string> = {};
                 for (const [key, value] of Object.entries(req.headers)) {
@@ -140,6 +141,8 @@ export class RelayHandler extends HttpRouter {
 
         this.logger.info('Provider info', { authParamKey: provider.authKey, useBearer: provider.useBearer });
         if (provider.key && provider.authSchema === 'header') {
+            // TODO r1 see if we can get rid of useBearer (just include that into the value of the secret key)
+            // TODO r1 authKey and key are a bit confusing, could use some renaming
             headers[provider.authKey] = [`${provider.useBearer ? 'Bearer ' : ''}${provider.key}`];
         }
         if (provider.key && provider.authSchema === 'query') {
