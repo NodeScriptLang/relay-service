@@ -1,7 +1,6 @@
-import { ImageReqParameters } from '../schema/ImageParameters.js';
 import { TextReqParameters } from '../schema/TextReqParameters.js';
 
-export class OpenaAiService {
+export class DeepseekService {
 
     formatTextRequestBody(parameters: TextReqParameters): Record<string, any> {
         return {
@@ -19,25 +18,9 @@ export class OpenaAiService {
             'max_tokens': parameters.maxTokens,
             'temperature': parameters.temperature,
             'top_p': parameters.topP,
+            'top_k': parameters.topK,
             'stop': parameters.stopSequences,
-            'frequency_penalty': parameters.frequencyPenalty,
-            'presence_penalty': parameters.presencePenalty,
-            'logit_bias': parameters.logitBias,
-            'response_format': parameters.responseFormat,
-            'seed': parameters.seed,
             'stream': parameters.stream
-        };
-    }
-
-    formatImageRequestBody(params: ImageReqParameters): Record<string, any> {
-        return {
-            'model': params.model,
-            'prompt': params.userPrompt,
-            'n': params.n,
-            'size': params.size,
-            'style': params.style,
-            'user': params.user,
-            'response_format': params.responseFormat,
         };
     }
 

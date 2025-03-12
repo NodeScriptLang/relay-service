@@ -8,8 +8,12 @@ import { Schema } from 'airtight';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
+import { ImageReqParametersSchema } from '../schema/ImageParameters.js';
 import { ServiceProvider, ServiceProviderSchema } from '../schema/ServiceProvider.js';
-import { TextReqParameters, TextReqParametersSchema } from '../schema/TextReqParameters.js';
+import { TextReqParametersSchema } from '../schema/TextReqParameters.js';
+import { AnthropicService } from '../services/AnthropicService.js';
+import { DeepseekService } from '../services/DeepSeekService.js';
+import { GeminiService } from '../services/GeminiService.js';
 import { OpenaAiService } from '../services/OpenaAiService.js';
 
 export class RelayHandler extends HttpRouter {
@@ -17,6 +21,9 @@ export class RelayHandler extends HttpRouter {
     @config() SERVICE_PROVIDERS!: string;
 
     @dep() private logger!: Logger;
+    @dep() private anthropicService!: AnthropicService;
+    @dep() private deepseekService!: DeepseekService;
+    @dep() private geminiService!: GeminiService;
     @dep() private openaAiService!: OpenaAiService;
 
     @metric()
@@ -154,26 +161,39 @@ export class RelayHandler extends HttpRouter {
         }
     }
 
-    private async formatRequestBody(ctx: HttpContext) {
+    private async formatRequestBody(ctx: HttpContext): Promise<Record<string, any>> {
         const providerId = ctx.params.providerId;
         const modelType = ctx.params.modelType;
 
         const body = await ctx.readRequestBody();
         const bodyString = body ? JSON.stringify(body) : undefined;
-        const textReqParameters = TextReqParametersSchema.decode(bodyString);
 
-        const serviceProvidersFormatters: Record<string, Record<string, (params: TextReqParameters) => Record<string, any>>> = {
-            openai: {
-                text: (params: TextReqParameters) => this.openaAiService.formatTextRequestBody(params),
-            },
-            // TODO add rest of service providers
-            anthropic: {
-                // anthropic formatters
-            },
-            // other providers...
-        };
+        if (providerId === 'anthropic' && modelType === 'text') {
+            const params = TextReqParametersSchema.decode(bodyString);
+            return this.anthropicService.formatTextRequestBody(params);
+        }
 
-        return serviceProvidersFormatters[providerId]?.[modelType]?.(textReqParameters) || bodyString;
+        if (providerId === 'deepseek' && modelType === 'text') {
+            const params = TextReqParametersSchema.decode(bodyString);
+            return this.deepseekService.formatTextRequestBody(params);
+        }
+
+        if (providerId === 'gemini' && modelType === 'text') {
+            const params = TextReqParametersSchema.decode(bodyString);
+            return this.geminiService.formatTextRequestBody(params);
+        }
+
+        if (providerId === 'openai' && modelType === 'text') {
+            const params = TextReqParametersSchema.decode(bodyString);
+            return this.openaAiService.formatTextRequestBody(params);
+        }
+
+        if (providerId === 'openai' && modelType === 'image') {
+            const params = ImageReqParametersSchema.decode(bodyString);
+            return this.openaAiService.formatImageRequestBody(params);
+        }
+
+        return body;
     }
 
 }
