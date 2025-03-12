@@ -2,22 +2,22 @@ import { TextReqParameters } from '../schema/TextReqParameters.js';
 
 export class AnthropicService {
 
-    formatTextRequestBody(parameters: TextReqParameters): Record<string, any> {
+    formatTextRequestBody(params: Partial<TextReqParameters>): Record<string, any> {
         return {
-            'model': parameters.model,
+            'model': params.model,
             'messages': [
                 {
                     role: 'user',
-                    content: parameters.userPrompt,
+                    content: params.userPrompt,
                 },
             ],
-            'max_tokens': parameters.maxTokens,
-            'temperature': parameters.temperature,
-            'top_p': parameters.topP,
-            'top_k': parameters.topK,
-            'stop_sequences': parameters.stopSequences,
-            'stream': parameters.stream,
-            'system': parameters.systemPrompt,
+            'max_tokens': params.maxTokens,
+            'temperature': params.temperature,
+            'top_p': params.topP,
+            'top_k': params.topK,
+            'stop_sequences': params.stopSequences,
+            'stream': params.stream,
+            'system': params.systemPrompt,
         };
     }
 

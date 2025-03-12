@@ -63,7 +63,8 @@ export const TextReqParametersSchema = new Schema<TextReqParameters>({
         },
         logitBias: {
             type: 'object',
-            additionalProperties: { type: 'number' }, // Token ID (number) -> bias (float)
+            properties: {},
+            additionalProperties: { type: 'number' },
             optional: true,
         },
         responseFormat: {

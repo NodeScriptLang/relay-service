@@ -8,11 +8,9 @@ import { Schema } from 'airtight';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
-import { ImageReqParametersSchema } from '../schema/ImageParameters.js';
 import { ServiceProvider, ServiceProviderSchema } from '../schema/ServiceProvider.js';
-import { TextReqParametersSchema } from '../schema/TextReqParameters.js';
 import { AnthropicService } from '../services/AnthropicService.js';
-import { DeepseekService } from '../services/DeepSeekService.js';
+import { DeepseekService } from '../services/DeepseekService.js';
 import { GeminiService } from '../services/GeminiService.js';
 import { OpenaAiService } from '../services/OpenaAiService.js';
 
@@ -48,17 +46,18 @@ export class RelayHandler extends HttpRouter {
     }>('nodescript_relay_service_errors_total', 'NodeScript Relay Service errors');
 
     routes: HttpRoute[] = [
-        ['*', `/{providerId}/*`, ctx => this.handleRequest(ctx)],
+        ['*', `/{modelType}/{providerId}/*`, ctx => this.handleRequest(ctx)],
     ];
 
     async handleRequest(ctx: HttpContext) {
         try {
             const body = await this.formatRequestBody(ctx);
+            const bodyString = body ? JSON.stringify(body) : {};
             const providersConfig = await this.readProviderConfig();
             const provider = providersConfig[ctx.params.providerId];
             const req = await this.parseRequestSpec(ctx, provider);
 
-            const res = await fetchUndici(req, body);
+            const res = await fetchUndici(req, bodyString);
             ctx.status = res.status;
             ctx.responseHeaders = Object.fromEntries(
                 Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
@@ -164,33 +163,26 @@ export class RelayHandler extends HttpRouter {
     private async formatRequestBody(ctx: HttpContext): Promise<Record<string, any>> {
         const providerId = ctx.params.providerId;
         const modelType = ctx.params.modelType;
-
         const body = await ctx.readRequestBody();
-        const bodyString = body ? JSON.stringify(body) : undefined;
 
         if (providerId === 'anthropic' && modelType === 'text') {
-            const params = TextReqParametersSchema.decode(bodyString);
-            return this.anthropicService.formatTextRequestBody(params);
+            return this.anthropicService.formatTextRequestBody(body);
         }
 
         if (providerId === 'deepseek' && modelType === 'text') {
-            const params = TextReqParametersSchema.decode(bodyString);
-            return this.deepseekService.formatTextRequestBody(params);
+            return this.deepseekService.formatTextRequestBody(body);
         }
 
         if (providerId === 'gemini' && modelType === 'text') {
-            const params = TextReqParametersSchema.decode(bodyString);
-            return this.geminiService.formatTextRequestBody(params);
+            return this.geminiService.formatTextRequestBody(body);
         }
 
         if (providerId === 'openai' && modelType === 'text') {
-            const params = TextReqParametersSchema.decode(bodyString);
-            return this.openaAiService.formatTextRequestBody(params);
+            return this.openaAiService.formatTextRequestBody(body);
         }
 
         if (providerId === 'openai' && modelType === 'image') {
-            const params = ImageReqParametersSchema.decode(bodyString);
-            return this.openaAiService.formatImageRequestBody(params);
+            return this.openaAiService.formatImageRequestBody(body);
         }
 
         return body;

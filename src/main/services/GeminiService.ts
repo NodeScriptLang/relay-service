@@ -2,26 +2,24 @@ import { TextReqParameters } from '../schema/TextReqParameters.js';
 
 export class GeminiService {
 
-    formatTextRequestBody(parameters: TextReqParameters): Record<string, any> {
+    formatTextRequestBody(params: Partial<TextReqParameters>): Record<string, any> {
         return {
             'contents': [
                 {
                     role: 'user',
                     parts: [
                         {
-                            text: parameters.userPrompt
+                            text: `${params.systemPrompt}\n\n${params.userPrompt}`
                         }
                     ]
                 },
             ],
             'generationConfig': {
-                'maxOutputTokens': parameters.maxTokens,
-                'temperature': parameters.temperature,
-                'top_p': parameters.topP,
-                'top_k': parameters.topK,
-                'stop_sequences': parameters.stopSequences,
-                'stream': parameters.stream,
-                'system_instruction': parameters.systemPrompt,
+                'maxOutputTokens': params.maxTokens,
+                'temperature': params.temperature,
+                'top_p': params.topP,
+                'top_k': params.topK,
+                'stop_sequences': params.stopSequences,
             }
         };
     }

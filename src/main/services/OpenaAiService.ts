@@ -3,33 +3,33 @@ import { TextReqParameters } from '../schema/TextReqParameters.js';
 
 export class OpenaAiService {
 
-    formatTextRequestBody(parameters: TextReqParameters): Record<string, any> {
+    formatTextRequestBody(params: Partial<TextReqParameters>): Record<string, any> {
         return {
-            'model': parameters.model,
+            'model': params.model,
             'messages': [
                 {
                     role: 'system',
-                    content: parameters.systemPrompt,
+                    content: params.systemPrompt,
                 },
                 {
                     role: 'user',
-                    content: parameters.userPrompt,
+                    content: params.userPrompt,
                 },
             ],
-            'max_tokens': parameters.maxTokens,
-            'temperature': parameters.temperature,
-            'top_p': parameters.topP,
-            'stop': parameters.stopSequences,
-            'frequency_penalty': parameters.frequencyPenalty,
-            'presence_penalty': parameters.presencePenalty,
-            'logit_bias': parameters.logitBias,
-            'response_format': parameters.responseFormat,
-            'seed': parameters.seed,
-            'stream': parameters.stream
+            'max_tokens': params.maxTokens,
+            'temperature': params.temperature,
+            'top_p': params.topP,
+            'stop': params.stopSequences,
+            'frequency_penalty': params.frequencyPenalty,
+            'presence_penalty': params.presencePenalty,
+            'logit_bias': params.logitBias,
+            'response_format': params.responseFormat,
+            'seed': params.seed,
+            'stream': params.stream
         };
     }
 
-    formatImageRequestBody(params: ImageReqParameters): Record<string, any> {
+    formatImageRequestBody(params: Partial<ImageReqParameters>): Record<string, any> {
         return {
             'model': params.model,
             'prompt': params.userPrompt,

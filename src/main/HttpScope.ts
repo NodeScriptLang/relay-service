@@ -6,7 +6,7 @@ import { MainHttpHandler } from './scoped/MainHttpHandler.js';
 import { NodeScriptApi } from './scoped/NodeScriptApi.js';
 import { RelayHandler } from './scoped/RelayHandler.js';
 import { AnthropicService } from './services/AnthropicService.js';
-import { DeepseekService } from './services/DeepSeekService.js';
+import { DeepseekService } from './services/DeepseekService.js';
 import { GeminiService } from './services/GeminiService.js';
 import { OpenaAiService } from './services/OpenaAiService.js';
 
