@@ -1,6 +1,6 @@
 import { Schema } from 'airtight';
 
-export interface TextReqParameters {
+export interface TextModelParams {
     model: string;
     userPrompt: string;
     systemPrompt: string;
@@ -19,7 +19,7 @@ export interface TextReqParameters {
     stream?: boolean;
 }
 
-export const TextReqParametersSchema = new Schema<TextReqParameters>({
+export const TextModelParamsSchema = new Schema<TextModelParams>({
     type: 'object',
     properties: {
         model: { type: 'string' },

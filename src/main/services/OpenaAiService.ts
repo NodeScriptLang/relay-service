@@ -1,9 +1,9 @@
-import { ImageReqParameters } from '../schema/ImageParameters.js';
-import { TextReqParameters } from '../schema/TextReqParameters.js';
+import { ImageModelParams } from '../schema/ImageModelParams.js';
+import { TextModelParams } from '../schema/TextModelParams.js';
 
 export class OpenaAiService {
 
-    formatTextRequestBody(params: Partial<TextReqParameters>): Record<string, any> {
+    formatTextRequestBody(params: Partial<TextModelParams>): Record<string, any> {
         return {
             'model': params.model,
             'messages': [
@@ -29,7 +29,7 @@ export class OpenaAiService {
         };
     }
 
-    formatImageRequestBody(params: Partial<ImageReqParameters>): Record<string, any> {
+    formatImageRequestBody(params: Partial<ImageModelParams>): Record<string, any> {
         return {
             'model': params.model,
             'prompt': params.userPrompt,

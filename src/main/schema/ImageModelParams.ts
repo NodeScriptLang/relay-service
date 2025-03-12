@@ -1,6 +1,6 @@
 import { Schema } from 'airtight';
 
-export interface ImageReqParameters {
+export interface ImageModelParams {
     model: string;
     userPrompt: string;
     systemPrompt: string;
@@ -12,7 +12,7 @@ export interface ImageReqParameters {
     style?: string;
 }
 
-export const ImageReqParametersSchema = new Schema<ImageReqParameters>({
+export const ImageModelParamsSchema = new Schema<ImageModelParams>({
     type: 'object',
     properties: {
         model: { type: 'string' },

@@ -1,8 +1,8 @@
-import { TextReqParameters } from '../schema/TextReqParameters.js';
+import { TextModelParams } from '../schema/TextModelParams.js';
 
 export class GeminiService {
 
-    formatTextRequestBody(params: Partial<TextReqParameters>): Record<string, any> {
+    formatTextRequestBody(params: Partial<TextModelParams>): Record<string, any> {
         return {
             'contents': [
                 {
