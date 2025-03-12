@@ -12,10 +12,10 @@ import { OpenaAiLlmService } from '../services/llm/OpenaAiLlmService.js';
 export class RelayHandler extends HttpRouter {
 
     @dep() private logger!: Logger;
-    @dep() private openaAiLlmService!: OpenaAiLlmService;
     @dep() private anthropicLlmService!: AnthropicLlmService;
-    @dep() private geminiLlmService!: GeminiLlmService;
     @dep() private deepseekLlmService!: DeepseekLlmService;
+    @dep() private geminiLlmService!: GeminiLlmService;
+    @dep() private openaAiLlmService!: OpenaAiLlmService;
 
     private llmServices: Record<string, LlmService> = {};
 
@@ -47,10 +47,10 @@ export class RelayHandler extends HttpRouter {
     constructor() {
         super();
         this.llmServices = {
-            'openai': this.openaAiLlmService,
             'anthropic': this.anthropicLlmService,
-            'gemini': this.geminiLlmService,
             'deepseek': this.deepseekLlmService,
+            'gemini': this.geminiLlmService,
+            'openai': this.openaAiLlmService
         };
     }
 
