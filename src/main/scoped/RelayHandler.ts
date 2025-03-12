@@ -1,7 +1,6 @@
 import { HttpContext, HttpRoute, HttpRouter } from '@nodescript/http-server';
 import { Logger } from '@nodescript/logger';
 import { CounterMetric, HistogramMetric, metric } from '@nodescript/metrics';
-import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
 import { AnthropicLlmService } from '../services/llm/AnthropicLlmService.js';
@@ -12,14 +11,13 @@ import { OpenaAiLlmService } from '../services/llm/OpenaAiLlmService.js';
 
 export class RelayHandler extends HttpRouter {
 
-    @config() SERVICE_PROVIDERS!: string;
-
     @dep() private logger!: Logger;
-    @dep() private llmServices!: Record<string, LlmService>;
     @dep() private openaAiLlmService!: OpenaAiLlmService;
     @dep() private anthropicLlmService!: AnthropicLlmService;
     @dep() private geminiLlmService!: GeminiLlmService;
     @dep() private deepseekLlmService!: DeepseekLlmService;
+
+    private llmServices: Record<string, LlmService> = {};
 
     @metric()
     private requestLatency = new HistogramMetric<{
@@ -46,7 +44,8 @@ export class RelayHandler extends HttpRouter {
         ['*', `/{serviceType}/{providerId}/*`, ctx => this.handleRequest(ctx)],
     ];
 
-    async init() {
+    constructor() {
+        super();
         this.llmServices = {
             'openai': this.openaAiLlmService,
             'anthropic': this.anthropicLlmService,
