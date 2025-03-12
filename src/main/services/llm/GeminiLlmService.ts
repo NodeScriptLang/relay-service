@@ -65,13 +65,14 @@ export class GeminiLlmService extends LlmService {
     }
 
     formatTextRequestBody(params: Partial<TextModelParams>): Record<string, any> {
+        const data = JSON.stringify(params.data);
         return {
             'contents': [
                 {
                     role: 'user',
                     parts: [
                         {
-                            text: `${params.systemPrompt}\n\n${params.userPrompt}${params.data ? `\n\n${params.data}` : ''}`
+                            text: `${params.systemPrompt}\n\n${params.userPrompt}${data ? `\n\n${data}` : ''}`
                         }
                     ]
                 },

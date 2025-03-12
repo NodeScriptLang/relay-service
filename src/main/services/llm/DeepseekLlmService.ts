@@ -64,6 +64,7 @@ export class DeepseekLlmService extends LlmService {
     }
 
     formatTextRequestBody(params: Partial<TextModelParams>): Record<string, any> {
+        const data = JSON.stringify(params.data);
         return {
             'model': params.model,
             'messages': [
@@ -73,7 +74,7 @@ export class DeepseekLlmService extends LlmService {
                 },
                 {
                     role: 'user',
-                    content: `${params.userPrompt}${params.data ? `\n\n${params.data}` : ''}`
+                    content: `${params.userPrompt}${data ? `\n\n${data}` : ''}`
                 },
             ],
             'max_tokens': params.maxTokens,
