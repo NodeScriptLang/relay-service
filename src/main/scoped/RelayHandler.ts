@@ -1,28 +1,25 @@
-import { FetchRequestSpecSchema } from '@nodescript/core/schema';
-import { FetchMethod, FetchRequestSpec } from '@nodescript/core/types';
-import { fetchUndici } from '@nodescript/fetch-undici';
 import { HttpContext, HttpRoute, HttpRouter } from '@nodescript/http-server';
 import { Logger } from '@nodescript/logger';
 import { CounterMetric, HistogramMetric, metric } from '@nodescript/metrics';
-import { Schema } from 'airtight';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
-import { ServiceProvider, ServiceProviderSchema } from '../schema/ServiceProvider.js';
-import { AnthropicService } from '../services/AnthropicService.js';
-import { DeepseekService } from '../services/DeepseekService.js';
-import { GeminiService } from '../services/GeminiService.js';
-import { OpenaAiService } from '../services/OpenaAiService.js';
+import { AnthropicLlmService } from '../services/llm/AnthropicLlmService.js';
+import { DeepseekLlmService } from '../services/llm/DeepseekLlmService.js';
+import { GeminiLlmService } from '../services/llm/GeminiLlmService.js';
+import { LlmService } from '../services/llm/LlmService.js';
+import { OpenaAiLlmService } from '../services/llm/OpenaAiLlmService.js';
 
 export class RelayHandler extends HttpRouter {
 
     @config() SERVICE_PROVIDERS!: string;
 
     @dep() private logger!: Logger;
-    @dep() private anthropicService!: AnthropicService;
-    @dep() private deepseekService!: DeepseekService;
-    @dep() private geminiService!: GeminiService;
-    @dep() private openaAiService!: OpenaAiService;
+    @dep() private llmServices!: Record<string, LlmService>;
+    @dep() private openaAiLlmService!: OpenaAiLlmService;
+    @dep() private anthropicLlmService!: AnthropicLlmService;
+    @dep() private geminiLlmService!: GeminiLlmService;
+    @dep() private deepseekLlmService!: DeepseekLlmService;
 
     @metric()
     private requestLatency = new HistogramMetric<{
@@ -46,39 +43,69 @@ export class RelayHandler extends HttpRouter {
     }>('nodescript_relay_service_errors_total', 'NodeScript Relay Service errors');
 
     routes: HttpRoute[] = [
-        ['*', `/{modelType}/{providerId}/*`, ctx => this.handleRequest(ctx)],
+        ['*', `/{serviceType}/{providerId}/*`, ctx => this.handleRequest(ctx)],
     ];
+
+    async init() {
+        this.llmServices = {
+            'openai': this.openaAiLlmService,
+            'anthropic': this.anthropicLlmService,
+            'gemini': this.geminiLlmService,
+            'deepseek': this.deepseekLlmService,
+        };
+    }
 
     async handleRequest(ctx: HttpContext) {
         try {
-            const body = await this.formatRequestBody(ctx);
-            const bodyString = body ? JSON.stringify(body) : {};
-            const providersConfig = await this.readProviderConfig();
-            const provider = providersConfig[ctx.params.providerId];
-            const req = await this.parseRequestSpec(ctx, provider);
+            const serviceType = ctx.params.serviceType;
+            const providerId = ctx.params.providerId;
+            const path = ctx.params['*'];
+            const body = await ctx.readRequestBody();
 
-            const res = await fetchUndici(req, bodyString);
-            ctx.status = res.status;
-            ctx.responseHeaders = Object.fromEntries(
-                Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
-            );
-            ctx.responseBody = res.body;
+            const headers = { ...ctx.requestHeaders };
+            delete headers['host'];
+            delete headers['authorization'];
+            delete headers['connection'];
+            delete headers['content-length'];
+
+            let res: any = {};
+            if (serviceType === 'llm') {
+                const service = this.llmServices[providerId];
+                if (!service) {
+                    ctx.status = 400;
+                    ctx.responseBody = { error: `Unsupported LLM provider: ${providerId}` };
+                    return;
+                }
+
+                const modelType = path.split('/')[0];
+                res = await service.complete({
+                    modelType,
+                    method: ctx.method,
+                    headers,
+                    params: body,
+                });
+                ctx.status = res.status || 200;
+                ctx.responseHeaders = Object.fromEntries(
+                    Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
+                );
+                ctx.responseBody = res.body;
+            }
 
             const size = Number(res.headers['content-length']) || 0;
             this.logger.info('Request served', {
-                url: req.url,
+                url: res.url,
                 status: res.status,
                 size,
             });
             this.requestLatency.addMillis(Date.now() - ctx.startedAt, {
                 status: res.status,
-                method: req.method,
-                hostname: this.tryParseHostname(req.url),
+                method: res.method,
+                hostname: this.tryParseHostname(res.url),
             });
             this.responseSize.incr(size, {
                 status: res.status,
-                method: req.method,
-                hostname: this.tryParseHostname(req.url),
+                method: res.method,
+                hostname: this.tryParseHostname(res.url),
             });
         } catch (error: any) {
             error.stack = '';
@@ -90,67 +117,6 @@ export class RelayHandler extends HttpRouter {
         }
     }
 
-    async readProviderConfig() {
-        return ServiceProvidersSchema.decode(JSON.parse(this.SERVICE_PROVIDERS)) || '{}';
-    }
-
-    async parseUrl(providerInfo: ServiceProvider, path: string) {
-        const baseUrl = providerInfo.baseUrl.replace(/\/$/, '');
-        const fullUrl = `${baseUrl}/${path}`;
-        return new URL(fullUrl);
-    }
-
-    private async parseRequestSpec(ctx: HttpContext, provider: ServiceProvider): Promise<FetchRequestSpec> {
-        const providerId = ctx.params.providerId;
-        const path = ctx.params['*'];
-        if (!provider) {
-            throw new Error(`Unsupported service provider: ${providerId}`);
-        }
-        const targetUrl = await this.parseUrl(provider, path);
-        this.logger.info('Calling external service provider URL', { url: targetUrl.toString() });
-
-        const headers = { ...ctx.requestHeaders };
-        delete headers['host'];
-        delete headers['authorization'];
-        delete headers['connection'];
-        delete headers['content-length'];
-
-        this.logger.info('Provider info', { authParamName: provider.authParamName });
-        if (provider.authToken && provider.authSchema === 'header') {
-            headers[provider.authParamName] = [`${provider.authToken}`];
-        }
-        if (provider.authToken && provider.authSchema === 'query') {
-            targetUrl.searchParams.append(provider.authParamName, provider.authToken);
-        }
-        if (provider.metadata['headers']) {
-            const metadataHeaders = provider.metadata['headers'];
-            for (const key in metadataHeaders) {
-                if (Object.prototype.hasOwnProperty.call(metadataHeaders, key)) {
-                    const value = metadataHeaders[key];
-                    headers[key] = [value];
-                }
-            }
-        }
-        if (provider.metadata['queries']) {
-            const metadataQueries = provider.metadata['queries'];
-            for (const key in metadataQueries) {
-                if (Object.prototype.hasOwnProperty.call(metadataQueries, key)) {
-                    const value = metadataQueries[key];
-                    targetUrl.searchParams.append(key, value);
-                }
-            }
-        }
-
-        this.logger.info('Requesting external service provider', { providerId });
-        return FetchRequestSpecSchema.create({
-            method: ctx.method as FetchMethod,
-            url: targetUrl.toString(),
-            headers,
-            followRedirects: true,
-            connectOptions: {},
-        });
-    }
-
     private tryParseHostname(url: string) {
         try {
             const { hostname } = new URL(url);
@@ -160,38 +126,4 @@ export class RelayHandler extends HttpRouter {
         }
     }
 
-    private async formatRequestBody(ctx: HttpContext): Promise<Record<string, any>> {
-        const providerId = ctx.params.providerId;
-        const modelType = ctx.params.modelType;
-        const body = await ctx.readRequestBody();
-
-        if (providerId === 'anthropic' && modelType === 'text') {
-            return this.anthropicService.formatTextRequestBody(body);
-        }
-
-        if (providerId === 'deepseek' && modelType === 'text') {
-            return this.deepseekService.formatTextRequestBody(body);
-        }
-
-        if (providerId === 'gemini' && modelType === 'text') {
-            return this.geminiService.formatTextRequestBody(body);
-        }
-
-        if (providerId === 'openai' && modelType === 'text') {
-            return this.openaAiService.formatTextRequestBody(body);
-        }
-
-        if (providerId === 'openai' && modelType === 'image') {
-            return this.openaAiService.formatImageRequestBody(body);
-        }
-
-        return body;
-    }
-
 }
-
-const ServiceProvidersSchema = new Schema<Record<string, ServiceProvider>>({
-    type: 'object',
-    properties: {},
-    additionalProperties: ServiceProviderSchema.schema,
-});

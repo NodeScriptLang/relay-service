@@ -1,6 +1,6 @@
-import { TextModelParams } from '../schema/TextModelParams.js';
+import { TextModelParams } from '../../schema/llm/TextModelParams.js';
 
-export class GeminiService {
+export class GeminiLlmService {
 
     formatTextRequestBody(params: Partial<TextModelParams>): Record<string, any> {
         return {

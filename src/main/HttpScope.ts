@@ -5,10 +5,11 @@ import { HttpAuthHandler } from './scoped/HttpAuthHandler.js';
 import { MainHttpHandler } from './scoped/MainHttpHandler.js';
 import { NodeScriptApi } from './scoped/NodeScriptApi.js';
 import { RelayHandler } from './scoped/RelayHandler.js';
-import { AnthropicService } from './services/AnthropicService.js';
-import { DeepseekService } from './services/DeepseekService.js';
-import { GeminiService } from './services/GeminiService.js';
-import { OpenaAiService } from './services/OpenaAiService.js';
+import { AnthropicLlmService } from './services/llm/AnthropicLlmService.js';
+import { DeepseekLlmService } from './services/llm/DeepseekLlmService.js';
+import { GeminiLlmService } from './services/llm/GeminiLlmService.js';
+import { LlmService } from './services/llm/LlmService.js';
+import { OpenaAiLlmService } from './services/llm/OpenaAiLlmService.js';
 
 export class HttpScope extends Mesh {
 
@@ -19,10 +20,10 @@ export class HttpScope extends Mesh {
         this.service(RelayHandler);
         this.service(MainHttpHandler);
         this.service(NodeScriptApi);
-        this.service(OpenaAiService);
-        this.service(AnthropicService);
-        this.service(GeminiService);
-        this.service(DeepseekService);
+        this.service(LlmService, OpenaAiLlmService);
+        this.service(LlmService, AnthropicLlmService);
+        this.service(LlmService, GeminiLlmService);
+        this.service(LlmService, DeepseekLlmService);
     }
 
 }

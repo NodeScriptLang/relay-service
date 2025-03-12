@@ -1,11 +1,15 @@
-import { TextModelParams } from '../schema/TextModelParams.js';
+import { TextModelParams } from '../../schema/llm/TextModelParams.js';
 
-export class AnthropicService {
+export class DeepseekLlmService {
 
     formatTextRequestBody(params: Partial<TextModelParams>): Record<string, any> {
         return {
             'model': params.model,
             'messages': [
+                {
+                    role: 'system',
+                    content: params.systemPrompt,
+                },
                 {
                     role: 'user',
                     content: `${params.userPrompt}${params.data ? `\n\n${params.data}` : ''}`
@@ -15,9 +19,8 @@ export class AnthropicService {
             'temperature': params.temperature,
             'top_p': params.topP,
             'top_k': params.topK,
-            'stop_sequences': params.stopSequences,
-            'stream': params.stream,
-            'system': params.systemPrompt,
+            'stop': params.stopSequences,
+            'stream': params.stream
         };
     }
 
