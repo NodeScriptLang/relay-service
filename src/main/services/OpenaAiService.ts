@@ -13,7 +13,7 @@ export class OpenaAiService {
                 },
                 {
                     role: 'user',
-                    content: params.userPrompt,
+                    content: `${params.systemPrompt}\n\n${params.data}`,
                 },
             ],
             'max_tokens': params.maxTokens,
