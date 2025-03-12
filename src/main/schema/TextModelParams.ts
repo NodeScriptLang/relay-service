@@ -26,7 +26,7 @@ export const TextModelParamsSchema = new Schema<TextModelParams>({
         userPrompt: { type: 'string' },
         systemPrompt: { type: 'string' },
         data: {
-            type: 'any', // Allow any valid JSON value (objects, arrays, primitives)
+            type: 'any',
             optional: true,
         },
         maxTokens: {
@@ -41,7 +41,7 @@ export const TextModelParamsSchema = new Schema<TextModelParams>({
         },
         topP: {
             type: 'number',
-            default: 1.0, // More standard than 0
+            default: 1.0,
             optional: true,
         },
         topK: {
