@@ -9,7 +9,7 @@ export class GeminiService {
                     role: 'user',
                     parts: [
                         {
-                            text: `${params.systemPrompt}\n\n${params.userPrompt}\n\n${params.data}`
+                            text: `${params.systemPrompt}\n\n${params.userPrompt}${params.data ? `\n\n${params.data}` : ''}`
                         }
                     ]
                 },

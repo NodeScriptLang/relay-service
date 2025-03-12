@@ -12,7 +12,7 @@ export class DeepseekService {
                 },
                 {
                     role: 'user',
-                    content: `${params.systemPrompt}\n\n${params.data}`
+                    content: `${params.userPrompt}${params.data ? `\n\n${params.data}` : ''}`
                 },
             ],
             'max_tokens': params.maxTokens,
