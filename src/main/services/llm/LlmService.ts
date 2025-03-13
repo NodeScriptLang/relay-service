@@ -12,7 +12,6 @@ export abstract class LlmService {
                 type: error.name || 'Error'
             },
             status: error.status || 500,
-            headers: {},
             endpointUrl: '',
         };
     }

@@ -7,13 +7,11 @@ export class OpenaAiLlmService extends LlmService {
 
     @config({ default: 'https://api.openai.com/v1' }) OPENAI_BASE_URL!: string;
     @config() LLM_OPENAI_API_KEY!: string;
-    @config({ default: 'https://api.openai.com/v1' }) OPENAI_API_BASE_URL!: string;
 
     async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
         try {
             const url = this.getRequestUrl(request.modelType);
             const body = this.getRequestBody(request.modelType, request.params);
-            const bodyString = body ? JSON.stringify(body) : undefined;
 
             const res = await fetch(url, {
                 method: request.method,
@@ -21,7 +19,7 @@ export class OpenaAiLlmService extends LlmService {
                     'Authorization': `Bearer ${this.LLM_OPENAI_API_KEY}`,
                     'Content-Type': 'application/json',
                 },
-                body: bodyString
+                body: body ? JSON.stringify(body) : undefined
             });
             if (!res.ok) {
                 const errorText = await res.text();
@@ -29,14 +27,9 @@ export class OpenaAiLlmService extends LlmService {
             }
             const json = await res.json();
 
-            const responseHeaders = Object.fromEntries(
-                Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
-            );
-
             return {
                 body: json,
                 status: res.status,
-                headers: responseHeaders,
                 endpointUrl: url,
             };
         } catch (error) {

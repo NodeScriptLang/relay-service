@@ -1,6 +1,3 @@
-import { FetchRequestSpecSchema } from '@nodescript/core/schema';
-import { FetchMethod } from '@nodescript/core/types';
-import { fetchUndici } from '@nodescript/fetch-undici';
 import { LlmCompleteRequest, LlmCompleteResponse, TextModelParams } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
@@ -11,32 +8,30 @@ export class DeepseekLlmService extends LlmService {
     @config({ default: 'https://api.deepseek.com/v1' }) DEEPSEEK_BASE_URL!: string;
     @config() LLM_DEEPSEEK_API_KEY!: string;
 
-    async complete(llmReq: LlmCompleteRequest): Promise<LlmCompleteResponse> {
+    async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
         try {
-            const url = this.getRequestUrl(llmReq.modelType);
-            const body = this.getRequestBody(llmReq.modelType, llmReq.params);
-            const bodyString = body ? JSON.stringify(body) : {};
+            const url = this.getRequestUrl(request.modelType);
+            const body = this.getRequestBody(request.modelType, request.params);
 
-            const req = FetchRequestSpecSchema.create({
-                method: llmReq.method as FetchMethod,
-                url,
+            const res = await fetch(url, {
+                method: request.method,
                 headers: {
                     'Authorization': `Bearer ${this.LLM_DEEPSEEK_API_KEY}`,
                     'Content-Type': 'application/json',
-                }
+                },
+                body: body ? JSON.stringify(body) : undefined
             });
 
-            const res = await fetchUndici(req, bodyString);
-
-            const responseHeaders = Object.fromEntries(
-                Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
-            );
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`Anthropic API error: ${res.status} ${errorText}`);
+            }
+            const json = await res.json();
 
             return {
-                body: await res.body,
+                body: json,
                 status: res.status,
-                headers: responseHeaders,
-                endpointUrl: req.url,
+                endpointUrl: url,
             };
         } catch (error) {
             return this.handleError(error);
