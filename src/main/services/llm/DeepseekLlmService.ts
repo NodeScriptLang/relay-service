@@ -9,33 +9,29 @@ export class DeepseekLlmService extends LlmService {
     @config() LLM_DEEPSEEK_API_KEY!: string;
 
     async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
-        try {
-            const url = this.getRequestUrl(request.modelType);
-            const body = this.getRequestBody(request.modelType, request.params);
+        const url = this.getRequestUrl(request.modelType);
+        const body = this.getRequestBody(request.modelType, request.params);
 
-            const res = await fetch(url, {
-                method: request.method,
-                headers: {
-                    'Authorization': `Bearer ${this.LLM_DEEPSEEK_API_KEY}`,
-                    'Content-Type': 'application/json',
-                },
-                body: body ? JSON.stringify(body) : undefined
-            });
+        const res = await fetch(url, {
+            method: request.method,
+            headers: {
+                'Authorization': `Bearer ${this.LLM_DEEPSEEK_API_KEY}`,
+                'Content-Type': 'application/json',
+            },
+            body: body ? JSON.stringify(body) : undefined
+        });
 
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`Anthropic API error: ${res.status} ${errorText}`);
-            }
-            const json = await res.json();
-
-            return {
-                body: json,
-                status: res.status,
-                endpointUrl: url,
-            };
-        } catch (error) {
-            return this.handleError(error);
+        if (!res.ok) {
+            const errorText = await res.text();
+            const error = new Error(`DeepSeek API error: ${res.status} ${errorText}`);
+            (error as any).status = res.status;
+            throw error;
         }
+        const json = await res.json();
+
+        return {
+            body: json,
+        };
     }
 
     private getRequestUrl(modelType: string): string {

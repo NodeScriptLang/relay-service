@@ -9,31 +9,27 @@ export class GeminiLlmService extends LlmService {
     @config() LLM_GEMINI_API_KEY!: string;
 
     async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
-        try {
-            const url = this.getRequestUrl(request.modelType, request.params.model);
-            const body = this.getRequestBody(request.modelType, request.params);
+        const url = this.getRequestUrl(request.modelType, request.params.model);
+        const body = this.getRequestBody(request.modelType, request.params);
 
-            const res = await fetch(url, {
-                method: request.method,
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: body ? JSON.stringify(body) : undefined
-            });
-            if (!res.ok) {
-                const errorText = await res.text();
-                throw new Error(`Gemini API error: ${res.status} ${errorText}`);
-            }
-            const json = await res.json();
-
-            return {
-                body: json,
-                status: res.status,
-                endpointUrl: url,
-            };
-        } catch (error) {
-            return this.handleError(error);
+        const res = await fetch(url, {
+            method: request.method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: body ? JSON.stringify(body) : undefined
+        });
+        if (!res.ok) {
+            const errorText = await res.text();
+            const error = new Error(`Gemini API error: ${res.status} ${errorText}`);
+            (error as any).status = res.status;
+            throw error;
         }
+        const json = await res.json();
+
+        return {
+            body: json,
+        };
     }
 
     private getRequestUrl(modelType: string, model: string): string {
