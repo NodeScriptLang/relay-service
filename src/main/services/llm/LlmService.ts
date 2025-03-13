@@ -2,7 +2,8 @@ import { LlmCompleteRequest, LlmCompleteResponse } from '@nodescript/relay-proto
 
 export abstract class LlmService {
 
-    abstract complete(llmReq: LlmCompleteRequest): Promise<LlmCompleteResponse>;
+    abstract getModels(): Record<string, any>;
+    abstract complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse>;
 
     handleError(error: any): Error {
         const err: any = new Error(error.message || 'Unknown LLM service error');

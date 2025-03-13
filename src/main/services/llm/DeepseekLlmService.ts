@@ -8,6 +8,10 @@ export class DeepseekLlmService extends LlmService {
     @config({ default: 'https://api.deepseek.com/v1' }) DEEPSEEK_BASE_URL!: string;
     @config() LLM_DEEPSEEK_API_KEY!: string;
 
+    getModels() {
+        return models;
+    }
+
     async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
         const url = this.getRequestUrl(request.modelType);
         const body = this.getRequestBody(request.modelType, request.params);
@@ -74,3 +78,39 @@ export class DeepseekLlmService extends LlmService {
     }
 
 }
+
+// TODO simplify pricing
+const models = {
+    text: [
+        {
+            id: 'deepseek-chat',
+            pricing: {
+                'standard': {
+                    'prompt_cache_hit_tokens': 0.07,
+                    'prompt_cache_miss_tokens': 0.27,
+                    'completion_tokens': 1.10
+                },
+                'discount': {
+                    'prompt_cache_hit_tokens': 0.035,
+                    'prompt_cache_miss_tokens': 0.135,
+                    'completion_tokens': 0.55
+                }
+            }
+        },
+        {
+            id: 'deepseek-reasoner',
+            pricing: {
+                'standard': {
+                    'prompt_cache_hit_tokens': 0.14,
+                    'prompt_cache_miss_tokens': 0.55,
+                    'completion_tokens': 2.19
+                },
+                'discount': {
+                    'prompt_cache_hit_tokens': 0.07,
+                    'prompt_cache_miss_tokens': 0.275,
+                    'completion_tokens': 1.10
+                }
+            }
+        }
+    ]
+};
