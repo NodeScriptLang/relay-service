@@ -8,6 +8,10 @@ export class AnthropicLlmService extends LlmService {
     @config({ default: 'https://api.anthropic.com/v1' }) ANTHROPIC_BASE_URL!: string;
     @config() LLM_ANTHROPIC_API_KEY!: string;
 
+    getModels() {
+        return models;
+    }
+
     async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
         const url = this.getRequestUrl(request.modelType);
         const body = this.getRequestBody(request.modelType, request.params);
@@ -72,3 +76,62 @@ export class AnthropicLlmService extends LlmService {
     }
 
 }
+
+const models = {
+    text: [
+        {
+            id: 'claude-3-7-sonnet-20250219',
+            pricing: {
+                'input_tokens': 3.00,
+                'completion_tokens': 15.00,
+                'cache_creation_input_tokens': 3.75,
+                'cache_read_input_tokens': 0.30
+            }
+        },
+        {
+            id: 'claude-3-5-sonnet-20241022',
+            pricing: {
+                'input_tokens': 3.00,
+                'completion_tokens': 15.00,
+                'cache_creation_input_tokens': 3.75,
+                'cache_read_input_tokens': 0.30
+            }
+        },
+        {
+            id: 'claude-3-5-haiku-20241022',
+            pricing: {
+                'input_tokens': 0.80,
+                'completion_tokens': 4.00,
+                'cache_creation_input_tokens': 1.00,
+                'cache_read_input_tokens': 0.08
+            }
+        },
+        {
+            id: 'claude-3-5-sonnet-20240620',
+            pricing: {
+                'input_tokens': 3.00,
+                'completion_tokens': 15.00,
+                'cache_creation_input_tokens': 3.75,
+                'cache_read_input_tokens': 0.30
+            }
+        },
+        {
+            id: 'claude-3-haiku-20240307',
+            pricing: {
+                'input_tokens': 0.25,
+                'completion_tokens': 1.25,
+                'cache_creation_input_tokens': 0.30,
+                'cache_read_input_tokens': 0.03
+            }
+        },
+        {
+            id: 'claude-3-opus-20240229',
+            pricing: {
+                'input_tokens': 7.50,
+                'completion_tokens': 37.50,
+                'cache_creation_input_tokens': 9.38,
+                'cache_read_input_tokens': 0.75
+            }
+        }
+    ]
+};

@@ -8,6 +8,10 @@ export class OpenaAiLlmService extends LlmService {
     @config({ default: 'https://api.openai.com/v1' }) OPENAI_BASE_URL!: string;
     @config() LLM_OPENAI_API_KEY!: string;
 
+    getModels() {
+        return models;
+    }
+
     async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
         const url = this.getRequestUrl(request.modelType);
         const body = this.getRequestBody(request.modelType, request.params);
@@ -93,3 +97,65 @@ export class OpenaAiLlmService extends LlmService {
     }
 
 }
+
+const models = {
+    text: [
+        {
+            id: 'gpt-4o',
+            pricing: {
+                'input_tokens': 2.50,
+                'cached_input_tokens': 1.25,
+                'output_tokens': 10.00
+            }
+        },
+        {
+            id: 'gpt-4o-mini',
+            pricing: {
+                'input_tokens': 0.15,
+                'cached_input_tokens': 0.075,
+                'output_tokens': 0.60
+            }
+        },
+        {
+            id: 'gpt-4-turbo',
+            pricing: {
+                'input_tokens': 0.03,
+                'cached_input_tokens': 0.015,
+                'output_tokens': 0.06
+            }
+        },
+        {
+            id: 'gpt-3.5-turbo',
+            pricing: {
+                'input_tokens': 0.015,
+                'cached_input_tokens': 0.0075,
+                'output_tokens': 0.020
+            }
+        }
+    ],
+    image: [
+        {
+            id: 'dall-e-3',
+            pricing: {
+                'standard': {
+                    '1024x1024': 0.040,
+                    '1024x1792': 0.080,
+                    '1792x1024': 0.080
+                },
+                'hd': {
+                    '1024x1024': 0.080,
+                    '1024x1792': 0.120,
+                    '1792x1024': 0.120
+                }
+            }
+        },
+        {
+            id: 'dall-e-2',
+            pricing: {
+                '256x256': 0.016,
+                '512x512': 0.018,
+                '1024x1024': 0.020
+            }
+        }
+    ]
+};

@@ -1,4 +1,4 @@
-import { LlmCompleteRequest, LlmCompleteResponse, LlmDomain } from '@nodescript/relay-protocol';
+import { LlmCompleteRequest, LlmCompleteResponse, LlmDomain, ModelType } from '@nodescript/relay-protocol';
 import { dep } from 'mesh-ioc';
 
 import { AnthropicLlmService } from '../services/llm/AnthropicLlmService.js';
@@ -25,9 +25,20 @@ export class LlmDomainImpl implements LlmDomain {
         };
     }
 
+    async getModels(req: { modelType: ModelType }): Promise<{ models: string[] }> {
+        const models = Object.values(this.llmServices)
+            .flatMap(service => {
+                const models = service.getModels()[req.modelType] || [];
+                return models.map((model: any) => model.id);
+            });
+        return { models };
+    }
+
     async complete(req: { request: LlmCompleteRequest }): Promise<{ response: LlmCompleteResponse }> {
-        const { request } = req;
-        const { providerId } = request;
+        const providerId = this.getProviderForModel(req.request.params.model);
+        if (!providerId) {
+            throw new Error(`Unsupported LLM model: ${req.request.params.model}`);
+        }
 
         const service = this.llmServices[providerId];
         if (!service) {
@@ -35,12 +46,34 @@ export class LlmDomainImpl implements LlmDomain {
         }
 
         try {
-            const response = await service.complete(request);
+            const response = await service.complete(req.request);
             return { response };
         } catch (error) {
             const err = service.handleError(error);
             throw err;
         }
+    }
+
+    getProviderForModel(modelId: string): string | undefined {
+        const modelMap = this.getAllModels();
+        return modelMap[modelId];
+    }
+
+    private getAllModels(): Record<string, string> {
+        const modelToProvider: Record<string, string> = {};
+
+        for (const [providerId, service] of Object.entries(this.llmServices)) {
+            const allModelTypes = service.getModels();
+
+            for (const models of Object.values(allModelTypes)) {
+                if (Array.isArray(models)) {
+                    for (const model of models) {
+                        modelToProvider[model.id] = providerId;
+                    }
+                }
+            }
+        }
+        return modelToProvider;
     }
 
 }

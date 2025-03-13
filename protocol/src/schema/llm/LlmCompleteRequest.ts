@@ -1,16 +1,17 @@
 import { Schema } from 'airtight';
 
+import { ImageModelParams } from './ImageModelParams.js';
+import { TextModelParams } from './TextModelParams.js';
+
 export interface LlmCompleteRequest {
-    providerId: string;
     modelType: string;
     method: string;
-    params: any;
+    params: TextModelParams | ImageModelParams;
 }
 
 export const LlmCompleteRequestSchema = new Schema<LlmCompleteRequest>({
     type: 'object',
     properties: {
-        providerId: { type: 'string' },
         modelType: { type: 'string' },
         method: { type: 'string' },
         params: { type: 'any' },

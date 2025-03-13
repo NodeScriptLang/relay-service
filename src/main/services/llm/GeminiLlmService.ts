@@ -8,6 +8,10 @@ export class GeminiLlmService extends LlmService {
     @config({ default: 'https://generativelanguage.googleapis.com/v1beta' }) GEMINI_BASE_URL!: string;
     @config() LLM_GEMINI_API_KEY!: string;
 
+    getModels() {
+        return models;
+    }
+
     async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
         const url = this.getRequestUrl(request.modelType, request.params.model);
         const body = this.getRequestBody(request.modelType, request.params);
@@ -74,3 +78,135 @@ export class GeminiLlmService extends LlmService {
     }
 
 }
+
+// TODO simplify pricing
+const models = {
+    text: [
+        {
+            id: 'gemini-2.0-pro-exp-02-05',
+            pricing: {
+                'promptTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 1.25
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 2.50
+                        }
+                    ]
+                },
+                'candidatesTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 5.00
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 10.00
+                        }
+                    ]
+                },
+                'contextCachingTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 0.3125
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 0.625
+                        }
+                    ]
+                },
+                'contextCachingStorage': 4.50
+            }
+        },
+        {
+            id: 'gemini-1.5-pro-001',
+            pricing: {
+                'promptTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 1.25
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 2.50
+                        }
+                    ]
+                },
+                'candidatesTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 5.00
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 10.00
+                        }
+                    ]
+                },
+                'contextCachingTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 0.3125
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 0.625
+                        }
+                    ]
+                },
+                'contextCachingStorage': 4.50
+            }
+        },
+        {
+            id: 'gemini-1.5-flash-001',
+            pricing: {
+                'promptTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 0.075
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 0.15
+                        }
+                    ]
+                },
+                'candidatesTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 0.30
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 0.60
+                        }
+                    ]
+                },
+                'contextCachingTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 0.01875
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 0.0375
+                        }
+                    ]
+                },
+                'contextCachingStorage': 1.00
+            }
+        }
+    ]
+};
