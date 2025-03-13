@@ -1,47 +1,43 @@
-import { FetchRequestSpecSchema } from '@nodescript/core/schema';
-import { FetchMethod } from '@nodescript/core/types';
-import { fetchUndici } from '@nodescript/fetch-undici';
+import { ImageModelParams, LlmCompleteRequest, LlmCompleteResponse, TextModelParams } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
-import { ImageModelParams } from '../../schema/llm/ImageModelParams.js';
-import { LlmCompleteRequest } from '../../schema/llm/LlmCompleteRequest.js';
-import { LlmCompleteResponse } from '../../schema/llm/LlmCompleteResponse.js';
-import { TextModelParams } from '../../schema/llm/TextModelParams.js';
 import { LlmService } from './LlmService.js';
 
 export class OpenaAiLlmService extends LlmService {
 
     @config({ default: 'https://api.openai.com/v1' }) OPENAI_BASE_URL!: string;
     @config() LLM_OPENAI_API_KEY!: string;
+    @config({ default: 'https://api.openai.com/v1' }) OPENAI_API_BASE_URL!: string;
 
-    async complete(llmReq: LlmCompleteRequest): Promise<LlmCompleteResponse> {
+    async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
         try {
-            const url = this.getRequestUrl(llmReq.modelType);
-            const body = this.getRequestBody(llmReq.modelType, llmReq.params);
-            const bodyString = body ? JSON.stringify(body) : {};
+            const url = this.getRequestUrl(request.modelType);
+            const body = this.getRequestBody(request.modelType, request.params);
+            const bodyString = body ? JSON.stringify(body) : undefined;
 
-            const req = FetchRequestSpecSchema.create({
-                method: llmReq.method as FetchMethod,
-                url,
+            const res = await fetch(url, {
+                method: request.method,
                 headers: {
-                    ...llmReq.headers,
                     'Authorization': `Bearer ${this.LLM_OPENAI_API_KEY}`,
                     'Content-Type': 'application/json',
-                }
+                },
+                body: bodyString
             });
-
-            const res = await fetchUndici(req, bodyString);
+            if (!res.ok) {
+                const errorText = await res.text();
+                throw new Error(`OpenAI API error: ${res.status} ${errorText}`);
+            }
+            const json = await res.json();
 
             const responseHeaders = Object.fromEntries(
                 Object.entries(res.headers).map(([k, v]) => [k, Array.isArray(v) ? v : [v]])
             );
 
             return {
-                body: await res.body,
+                body: json,
                 status: res.status,
                 headers: responseHeaders,
-                url: req.url,
-                method: req.method,
+                endpointUrl: url,
             };
         } catch (error) {
             return this.handleError(error);

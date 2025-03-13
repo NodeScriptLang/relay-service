@@ -1,11 +1,9 @@
 import { FetchRequestSpecSchema } from '@nodescript/core/schema';
 import { FetchMethod } from '@nodescript/core/types';
 import { fetchUndici } from '@nodescript/fetch-undici';
+import { LlmCompleteRequest, LlmCompleteResponse, TextModelParams } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
-import { LlmCompleteRequest } from '../../schema/llm/LlmCompleteRequest.js';
-import { LlmCompleteResponse } from '../../schema/llm/LlmCompleteResponse.js';
-import { TextModelParams } from '../../schema/llm/TextModelParams.js';
 import { LlmService } from './LlmService.js';
 
 export class AnthropicLlmService extends LlmService {
@@ -23,7 +21,6 @@ export class AnthropicLlmService extends LlmService {
                 method: llmReq.method as FetchMethod,
                 url,
                 headers: {
-                    ...llmReq.headers,
                     'X-Api-Key': this.LLM_ANTHROPIC_API_KEY,
                     'Content-Type': 'application/json',
                     'Anthropic-Version': '2023-06-01',
@@ -41,8 +38,7 @@ export class AnthropicLlmService extends LlmService {
                 body: await res.body,
                 status: res.status,
                 headers: responseHeaders,
-                url: req.url,
-                method: req.method,
+                endpointUrl: req.url,
             };
         } catch (error) {
             return this.handleError(error);

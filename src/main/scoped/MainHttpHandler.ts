@@ -2,14 +2,14 @@ import { HttpChain, HttpContext, HttpCorsHandler, HttpErrorHandler, HttpHandler,
 import { dep } from 'mesh-ioc';
 
 import { HttpAuthHandler } from './HttpAuthHandler.js';
-import { RelayHandler } from './RelayHandler.js';
+import { RelayProtocolHandler } from './RelayProtocolHandler.js';
 
 export class MainHttpHandler implements HttpHandler {
 
     @dep() private errorHandler!: HttpErrorHandler;
     @dep() private authHandler!: HttpAuthHandler;
     @dep() private corsHandler!: HttpCorsHandler;
-    @dep() private relayHandler!: RelayHandler;
+    @dep() private relayProtocolHandler!: RelayProtocolHandler;
 
     private corsConfigHandler: HttpHandler = {
         async handle(ctx, next) {
@@ -24,7 +24,7 @@ export class MainHttpHandler implements HttpHandler {
         this.authHandler,
         this.corsConfigHandler,
         this.corsHandler,
-        this.relayHandler,
+        this.relayProtocolHandler,
     ]);
 
     async handle(ctx: HttpContext, next: HttpNext) {

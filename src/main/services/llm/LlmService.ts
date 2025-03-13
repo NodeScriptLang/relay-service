@@ -1,7 +1,4 @@
-import { FetchResponseBody } from '@nodescript/core/types';
-
-import { LlmCompleteRequest } from '../../schema/llm/LlmCompleteRequest.js';
-import { LlmCompleteResponse } from '../../schema/llm/LlmCompleteResponse.js';
+import { LlmCompleteRequest, LlmCompleteResponse } from '@nodescript/relay-protocol';
 
 export abstract class LlmService {
 
@@ -13,11 +10,10 @@ export abstract class LlmService {
                 error: error.message,
                 code: error.code || 'UNKNOWN_ERROR',
                 type: error.name || 'Error'
-            } as unknown as FetchResponseBody,
+            },
             status: error.status || 500,
             headers: {},
-            url: '',
-            method: '',
+            endpointUrl: '',
         };
     }
 
