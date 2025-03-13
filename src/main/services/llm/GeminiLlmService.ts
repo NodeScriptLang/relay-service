@@ -1,4 +1,4 @@
-import { LlmCompleteRequest, LlmCompleteResponse, TextModelParams } from '@nodescript/relay-protocol';
+import { LlmCompleteRequest, LlmCompleteResponse, LlmTextModelParams } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 import { LlmService } from './LlmService.js';
@@ -54,7 +54,7 @@ export class GeminiLlmService extends LlmService {
         }
     }
 
-    formatTextRequestBody(params: Partial<TextModelParams>): Record<string, any> {
+    formatTextRequestBody(params: Partial<LlmTextModelParams>): Record<string, any> {
         const data = JSON.stringify(params.data);
         return {
             'contents': [

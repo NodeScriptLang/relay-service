@@ -1,4 +1,4 @@
-import { LlmCompleteRequest, LlmCompleteResponse, LlmDomain, ModelType } from '@nodescript/relay-protocol';
+import { LlmCompleteRequest, LlmCompleteResponse, LlmDomain, LlmModelType } from '@nodescript/relay-protocol';
 import { dep } from 'mesh-ioc';
 
 import { AnthropicLlmService } from '../services/llm/AnthropicLlmService.js';
@@ -25,7 +25,7 @@ export class LlmDomainImpl implements LlmDomain {
         };
     }
 
-    async getModels(req: { modelType: ModelType }): Promise<{ models: string[] }> {
+    async getModels(req: { modelType: LlmModelType }): Promise<{ models: string[] }> {
         const models = Object.values(this.llmServices)
             .flatMap(service => {
                 const models = service.getModels()[req.modelType] || [];

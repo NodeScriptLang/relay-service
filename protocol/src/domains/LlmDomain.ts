@@ -2,12 +2,12 @@ import { DomainDef } from '@nodescript/protocomm';
 
 import { LlmCompleteRequest, LlmCompleteRequestSchema } from '../schema/llm/LlmCompleteRequest.js';
 import { LlmCompleteResponse, LlmCompleteResponseSchema } from '../schema/llm/LlmCompleteResponse.js';
-import { ModelType, ModelTypeSchema } from '../schema/llm/ModelType.js';
+import { LlmModelType, LlmModelTypeSchema } from '../schema/llm/LlmModelType.js';
 
 export interface LlmDomain {
 
     getModels(req: {
-        modelType: ModelType;
+        modelType: LlmModelType;
     }): Promise<{
         models: string[];
     }>;
@@ -26,7 +26,7 @@ export const LlmDomain: DomainDef<LlmDomain> = {
         getModels: {
             type: 'query',
             params: {
-                modelType: ModelTypeSchema.schema,
+                modelType: LlmModelTypeSchema.schema,
             },
             returns: {
                 models: {

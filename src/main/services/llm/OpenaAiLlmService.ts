@@ -1,4 +1,4 @@
-import { ImageModelParams, LlmCompleteRequest, LlmCompleteResponse, TextModelParams } from '@nodescript/relay-protocol';
+import { LlmCompleteRequest, LlmCompleteResponse, LlmImageModelParams, LlmTextModelParams } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 import { LlmService } from './LlmService.js';
@@ -57,7 +57,7 @@ export class OpenaAiLlmService extends LlmService {
         }
     }
 
-    private formatTextRequestBody(params: Partial<TextModelParams>): Record<string, any> {
+    private formatTextRequestBody(params: Partial<LlmTextModelParams>): Record<string, any> {
         const data = JSON.stringify(params.data);
         return {
             'model': params.model,
@@ -84,7 +84,7 @@ export class OpenaAiLlmService extends LlmService {
         };
     }
 
-    private formatImageRequestBody(params: Partial<ImageModelParams>): Record<string, any> {
+    private formatImageRequestBody(params: Partial<LlmImageModelParams>): Record<string, any> {
         return {
             'model': params.model,
             'prompt': params.userPrompt,
