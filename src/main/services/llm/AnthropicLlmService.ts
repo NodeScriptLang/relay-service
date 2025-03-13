@@ -1,4 +1,4 @@
-import { LlmCompleteRequest, LlmCompleteResponse, LlmTextModelParams } from '@nodescript/relay-protocol';
+import { LlmCompleteRequest, LlmCompleteResponse, LlmModelType, LlmTextModelParams } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 import { LlmService } from './LlmService.js';
@@ -33,22 +33,31 @@ export class AnthropicLlmService extends LlmService {
             throw error;
         }
         const json = await res.json();
-
-        return {
-            body: json,
-        };
+        return this.getResponse(request.modelType, json);
     }
 
-    private getRequestUrl(modelType: string): string {
-        if (modelType === 'text') {
+    protected getRequestUrl(modelType: string): string {
+        if (modelType === LlmModelType.TEXT) {
             return `${this.ANTHROPIC_BASE_URL}/messages`;
         } else {
             throw new Error(`Unsupported model type: ${modelType}`);
         }
     }
 
-    private getRequestBody(modelType: string, params: any): Record<string, any> {
-        if (modelType === 'text') {
+    protected getResponse(modelType: string, json: Record<string, any>): LlmCompleteResponse {
+        if (modelType === LlmModelType.TEXT) {
+            return {
+                content: json.content[0].text,
+                totalTokens: json.usage.input_tokens + json.usage.output_tokens,
+                fullResponse: json,
+            };
+        } else {
+            throw new Error(`Unsupported model type: ${modelType}`);
+        }
+    }
+
+    protected getRequestBody(modelType: string, params: any): Record<string, any> {
+        if (modelType === LlmModelType.TEXT) {
             return this.formatTextRequestBody(params);
         } else {
             throw new Error(`Unsupported model type: ${modelType}`);

@@ -1,4 +1,4 @@
-import { LlmCompleteRequest, LlmCompleteResponse, LlmImageModelParams, LlmTextModelParams } from '@nodescript/relay-protocol';
+import { LlmCompleteRequest, LlmCompleteResponse, LlmImageModelParams, LlmModelType, LlmTextModelParams } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 import { LlmService } from './LlmService.js';
@@ -31,26 +31,40 @@ export class OpenaAiLlmService extends LlmService {
             throw error;
         }
         const json = await res.json();
-
-        return {
-            body: json
-        };
+        return this.getResponse(request.modelType, json);
     }
 
-    private getRequestUrl(modelType: string): string {
-        if (modelType === 'text') {
+    protected getRequestUrl(modelType: string): string {
+        if (modelType === LlmModelType.TEXT) {
             return `${this.OPENAI_BASE_URL}/chat/completions`;
-        } else if (modelType === 'image') {
+        } else if (modelType === LlmModelType.IMAGE) {
             return `${this.OPENAI_BASE_URL}/images/generations`;
         } else {
             throw new Error(`Unsupported model type: ${modelType}`);
         }
     }
 
-    private getRequestBody(modelType: string, params: any): Record<string, any> {
-        if (modelType === 'text') {
+    protected getResponse(modelType: string, json: Record<string, any>): LlmCompleteResponse {
+        if (modelType === LlmModelType.TEXT) {
+            return {
+                content: json.choices[0].message.content,
+                totalTokens: json.usage.total_tokens,
+                fullResponse: json,
+            };
+        } else if (modelType === LlmModelType.IMAGE) {
+            return {
+                content: json.data[0].url,
+                fullResponse: json,
+            };
+        } else {
+            throw new Error(`Unsupported model type: ${modelType}`);
+        }
+    }
+
+    protected getRequestBody(modelType: string, params: any): Record<string, any> {
+        if (modelType === LlmModelType.TEXT) {
             return this.formatTextRequestBody(params);
-        } else if (modelType === 'image') {
+        } else if (modelType === LlmModelType.IMAGE) {
             return this.formatImageRequestBody(params);
         } else {
             throw new Error(`Unsupported model type: ${modelType}`);

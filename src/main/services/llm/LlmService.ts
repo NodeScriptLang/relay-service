@@ -5,6 +5,10 @@ export abstract class LlmService {
     abstract getModels(): Record<string, any>;
     abstract complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse>;
 
+    protected abstract getRequestUrl(modelType: string, model?: string): string;
+    protected abstract getResponse(modelType: string, json: Record<string, any>): LlmCompleteResponse;
+    protected abstract getRequestBody(modelType: string, params: any): Record<string, any>;
+
     handleError(error: any): Error {
         const err: any = new Error(error.message || 'Unknown LLM service error');
         err.originalError = error;
