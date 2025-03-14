@@ -6,6 +6,8 @@ import { LlmService } from './LlmService.js';
 export class GeminiLlmService extends LlmService {
 
     @config({ default: 'https://generativelanguage.googleapis.com/v1beta' }) GEMINI_BASE_URL!: string;
+    @config({ default: 1_000_000 }) GEMINI_PRICE_PER_TOKENS!: number;
+
     @config() LLM_GEMINI_API_KEY!: string;
 
     getModels() {
@@ -32,11 +34,11 @@ export class GeminiLlmService extends LlmService {
         return this.getResponse(request.modelType, json);
     }
 
-    calculateCost(modelType: string, modelId: string, json: Record<string, any>): number {
+    calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
         if (modelType === LlmModelType.TEXT) {
-            const model = models.text.find(m => m.id === modelId);
+            const model = models.text.find(m => m.id === params.model);
             if (!model) {
-                throw new Error(`Unsupported model: ${modelId}`);
+                throw new Error(`Unsupported model: ${params.model}`);
             }
 
             const promptTokenCount = json.usageMetadata?.promptTokenCount || 0;
@@ -55,9 +57,9 @@ export class GeminiLlmService extends LlmService {
                 model.pricing.contextCachingTokenCount.tiered_pricing[0].price :
                 model.pricing.contextCachingTokenCount.tiered_pricing[1].price;
 
-            const promptCost = (promptTokenCount * promptPrice) / 1000;
-            const candidatesCost = (candidatesTokenCount * candidatesPrice) / 1000;
-            const cachingCost = (contextCachingTokenCount * cachingPrice) / 1000;
+            const promptCost = (promptTokenCount * promptPrice) / this.GEMINI_PRICE_PER_TOKENS;
+            const candidatesCost = (candidatesTokenCount * candidatesPrice) / this.GEMINI_PRICE_PER_TOKENS;
+            const cachingCost = (contextCachingTokenCount * cachingPrice) / this.GEMINI_PRICE_PER_TOKENS;
 
             return promptCost + candidatesCost + cachingCost;
         }
@@ -119,8 +121,9 @@ export class GeminiLlmService extends LlmService {
 
 }
 
-// TODO simplify pricing
+// USD
 const models = {
+    // Per 1M tokens
     text: [
         {
             id: 'gemini-2.0-pro-exp-02-05',

@@ -6,6 +6,7 @@ import { LlmService } from './LlmService.js';
 export class DeepseekLlmService extends LlmService {
 
     @config({ default: 'https://api.deepseek.com/v1' }) DEEPSEEK_BASE_URL!: string;
+    @config({ default: 1_000_000 }) DEEPSEEK_PRICE_PER_TOKENS!: number;
     @config() LLM_DEEPSEEK_API_KEY!: string;
 
     getModels() {
@@ -35,11 +36,11 @@ export class DeepseekLlmService extends LlmService {
         return this.getResponse(request.modelType, json);
     }
 
-    calculateCost(modelType: string, modelId: string, json: Record<string, any>): number {
+    calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
         if (modelType === LlmModelType.TEXT) {
-            const model = models.text.find(m => m.id === modelId);
+            const model = models.text.find(m => m.id === params.model);
             if (!model) {
-                throw new Error(`Unsupported model: ${modelId}`);
+                throw new Error(`Unsupported model: ${params.model}`);
             }
 
             const pricingTier = 'standard'; // Default to standard pricing for simplicity
@@ -50,9 +51,9 @@ export class DeepseekLlmService extends LlmService {
                 (json.usage?.prompt_tokens - (json.usage?.prompt_tokens_details?.cached_tokens || 0));
             const completionTokens = json.usage?.completion_tokens || 0;
 
-            const cacheHitCost = promptCacheHitTokens * (pricing.prompt_cache_hit_tokens / 1000);
-            const cacheMissCost = promptCacheMissTokens * (pricing.prompt_cache_miss_tokens / 1000);
-            const completionCost = completionTokens * (pricing.completion_tokens / 1000);
+            const cacheHitCost = promptCacheHitTokens * (pricing.prompt_cache_hit_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
+            const cacheMissCost = promptCacheMissTokens * (pricing.prompt_cache_miss_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
+            const completionCost = completionTokens * (pricing.completion_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
 
             return cacheHitCost + cacheMissCost + completionCost;
         }

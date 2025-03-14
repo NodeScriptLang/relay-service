@@ -6,6 +6,8 @@ import { LlmService } from './LlmService.js';
 export class AnthropicLlmService extends LlmService {
 
     @config({ default: 'https://api.anthropic.com/v1' }) ANTHROPIC_BASE_URL!: string;
+    @config({ default: 1_000_000 }) ANTHROPIC_PRICE_PER_TOKENS!: number;
+
     @config() LLM_ANTHROPIC_API_KEY!: string;
 
     getModels() {
@@ -56,11 +58,11 @@ export class AnthropicLlmService extends LlmService {
         }
     }
 
-    calculateCost(modelType: string, modelId: string, json: Record<string, any>): number {
+    calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
         if (modelType === LlmModelType.TEXT) {
-            const model = models.text.find(m => m.id === modelId);
+            const model = models.text.find(m => m.id === params.model);
             if (!model) {
-                throw new Error(`Unsupported model: ${modelId}`);
+                throw new Error(`Unsupported model: ${params.model}`);
             }
 
             const inputTokens = json.usage?.input_tokens || 0;
@@ -70,10 +72,10 @@ export class AnthropicLlmService extends LlmService {
 
             const regularInputTokens = inputTokens - cacheCreationInputTokens - cacheReadInputTokens;
 
-            const inputCost = regularInputTokens * (model.pricing.input_tokens / 1000);
-            const outputCost = outputTokens * (model.pricing.completion_tokens / 1000);
-            const cacheCreationCost = cacheCreationInputTokens * (model.pricing.cache_creation_input_tokens / 1000);
-            const cacheReadCost = cacheReadInputTokens * (model.pricing.cache_read_input_tokens / 1000);
+            const inputCost = regularInputTokens * (model.pricing.input_tokens / this.ANTHROPIC_PRICE_PER_TOKENS);
+            const outputCost = outputTokens * (model.pricing.completion_tokens / this.ANTHROPIC_PRICE_PER_TOKENS);
+            const cacheCreationCost = cacheCreationInputTokens * (model.pricing.cache_creation_input_tokens / this.ANTHROPIC_PRICE_PER_TOKENS);
+            const cacheReadCost = cacheReadInputTokens * (model.pricing.cache_read_input_tokens / this.ANTHROPIC_PRICE_PER_TOKENS);
 
             return inputCost + outputCost + cacheCreationCost + cacheReadCost;
         }

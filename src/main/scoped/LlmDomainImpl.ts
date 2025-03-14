@@ -51,7 +51,7 @@ export class LlmDomainImpl implements LlmDomain {
 
         try {
             const response = await service.complete(req.request);
-            const cost = service.calculateCost(modelType, params.model, response.fullResponse);
+            const cost = service.calculateCost(modelType, params, response.fullResponse);
             const credits = this.caculateCredits(cost);
             this.nsApi.addUsage(credits);
             return { response };

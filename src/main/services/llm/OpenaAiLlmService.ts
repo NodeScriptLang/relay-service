@@ -6,6 +6,8 @@ import { LlmService } from './LlmService.js';
 export class OpenaAiLlmService extends LlmService {
 
     @config({ default: 'https://api.openai.com/v1' }) OPENAI_BASE_URL!: string;
+    @config({ default: 1_000_000 }) OPENAI_PRICE_PER_TOKENS!: number;
+
     @config() LLM_OPENAI_API_KEY!: string;
 
     getModels() {
@@ -44,11 +46,11 @@ export class OpenaAiLlmService extends LlmService {
         }
     }
 
-    calculateCost(modelType: string, modelId: string, json: Record<string, any>): number {
+    calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
         if (modelType === LlmModelType.TEXT) {
-            const model = models.text.find(m => m.id === modelId);
+            const model = models.text.find(m => m.id === params.model);
             if (!model) {
-                throw new Error(`Unsupported model: ${modelId}`);
+                throw new Error(`Unsupported model: ${params.model}`);
             }
 
             const promptTokens = json.usage.prompt_tokens;
@@ -56,22 +58,37 @@ export class OpenaAiLlmService extends LlmService {
             const cachedTokens = json.usage.prompt_tokens_details?.cached_tokens || 0;
             const nonCachedPromptTokens = promptTokens - cachedTokens;
 
-            const promptCost = nonCachedPromptTokens * (model.pricing['input_tokens'] / 1000);
-            const cachedCost = cachedTokens * (model.pricing['cached_input_tokens'] / 1000);
-            const completionCost = completionTokens * (model.pricing['output_tokens'] / 1000);
+            const promptCost = nonCachedPromptTokens * (model.pricing['input_tokens'] / this.OPENAI_PRICE_PER_TOKENS);
+            const cachedCost = cachedTokens * (model.pricing['cached_input_tokens'] / this.OPENAI_PRICE_PER_TOKENS);
+            const completionCost = completionTokens * (model.pricing['output_tokens'] / this.OPENAI_PRICE_PER_TOKENS);
 
             return promptCost + cachedCost + completionCost;
         }
 
         if (modelType === LlmModelType.IMAGE) {
-            const model = models.image.find(m => m.id === modelId);
+            const model = models.image.find(m => m.id === params.model);
             if (!model) {
-                throw new Error(`Unsupported model: ${modelId}`);
+                throw new Error(`Unsupported model: ${params.model}`);
             }
-            // For DALL-E models, we need to calculate based on image size and quality
-            // This would need additional parameters from the request
-            // For now, returning 0 as the current implementation is incomplete
-            return 0;
+
+            const size: ImageSize = params.size || '1024x1024';
+            const quality: ImageQuality = params.quality || 'standard';
+            const count = params.n || 1;
+
+            if (model.id === 'dall-e-3') {
+                // DALL-E 3 has different pricing for standard vs HD
+                const qualityPricing = model.pricing[quality];
+                if (!qualityPricing) {
+                    throw new Error(`Unsupported quality: ${quality}`);
+                }
+                const sizePrice = qualityPricing[size] || 0;
+                return sizePrice * count;
+            }
+            if (model.id === 'dall-e-2') {
+                // DALL-E 2 has pricing by size only
+                const sizePrice = model.pricing[size] || 0;
+                return sizePrice * count;
+            }
         }
 
         return 0;
@@ -145,9 +162,10 @@ export class OpenaAiLlmService extends LlmService {
 
 }
 
-// USD
+type ImageQuality = 'standard' | 'hd';
+type ImageSize = '256x256' | '512x512' | '1024x1024' | '1024x1792' | '1792x1024';
+
 const models = {
-    // Per million tokens
     text: [
         {
             id: 'gpt-4o',
@@ -182,7 +200,6 @@ const models = {
             }
         }
     ],
-    // Per image
     image: [
         {
             id: 'dall-e-3',
@@ -190,12 +207,16 @@ const models = {
                 'standard': {
                     '1024x1024': 0.040,
                     '1024x1792': 0.080,
-                    '1792x1024': 0.080
+                    '1792x1024': 0.080,
+                    '256x256': null,
+                    '512x512': null
                 },
                 'hd': {
                     '1024x1024': 0.080,
                     '1024x1792': 0.120,
-                    '1792x1024': 0.120
+                    '1792x1024': 0.120,
+                    '256x256': null,
+                    '512x512': null
                 }
             }
         },
@@ -204,7 +225,9 @@ const models = {
             pricing: {
                 '256x256': 0.016,
                 '512x512': 0.018,
-                '1024x1024': 0.020
+                '1024x1024': 0.020,
+                '1024x1792': null,
+                '1792x1024': null
             }
         }
     ]
