@@ -56,6 +56,30 @@ export class AnthropicLlmService extends LlmService {
         }
     }
 
+    calculateCost(modelType: string, modelId: string, json: Record<string, any>): number {
+        if (modelType === LlmModelType.TEXT) {
+            const model = models.text.find(m => m.id === modelId);
+            if (!model) {
+                throw new Error(`Unsupported model: ${modelId}`);
+            }
+
+            const inputTokens = json.usage?.input_tokens || 0;
+            const outputTokens = json.usage?.output_tokens || 0;
+            const cacheCreationInputTokens = json.usage?.cache_creation_input_tokens || 0;
+            const cacheReadInputTokens = json.usage?.cache_read_input_tokens || 0;
+
+            const regularInputTokens = inputTokens - cacheCreationInputTokens - cacheReadInputTokens;
+
+            const inputCost = regularInputTokens * (model.pricing.input_tokens / 1000);
+            const outputCost = outputTokens * (model.pricing.completion_tokens / 1000);
+            const cacheCreationCost = cacheCreationInputTokens * (model.pricing.cache_creation_input_tokens / 1000);
+            const cacheReadCost = cacheReadInputTokens * (model.pricing.cache_read_input_tokens / 1000);
+
+            return inputCost + outputCost + cacheCreationCost + cacheReadCost;
+        }
+        return 0;
+    }
+
     protected getRequestBody(modelType: string, params: any): Record<string, any> {
         if (modelType === LlmModelType.TEXT) {
             return this.formatTextRequestBody(params);

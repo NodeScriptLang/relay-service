@@ -6,8 +6,11 @@ import { DeepseekLlmService } from '../services/llm/DeepseekLlmService.js';
 import { GeminiLlmService } from '../services/llm/GeminiLlmService.js';
 import { LlmService } from '../services/llm/LlmService.js';
 import { OpenaAiLlmService } from '../services/llm/OpenaAiLlmService.js';
+import { NodeScriptApi } from './NodeScriptApi.js';
 
 export class LlmDomainImpl implements LlmDomain {
+
+    @dep() private nsApi!: NodeScriptApi;
 
     @dep() private anthropicLlmService!: AnthropicLlmService;
     @dep() private deepseekLlmService!: DeepseekLlmService;
@@ -35,9 +38,10 @@ export class LlmDomainImpl implements LlmDomain {
     }
 
     async complete(req: { request: LlmCompleteRequest }): Promise<{ response: LlmCompleteResponse }> {
-        const providerId = this.getProviderForModel(req.request.params.model);
+        const { modelType, params } = req.request;
+        const providerId = this.getProviderForModel(params.model);
         if (!providerId) {
-            throw new Error(`Unsupported LLM model: ${req.request.params.model}`);
+            throw new Error(`Unsupported LLM model: ${params.model}`);
         }
 
         const service = this.llmServices[providerId];
@@ -47,6 +51,9 @@ export class LlmDomainImpl implements LlmDomain {
 
         try {
             const response = await service.complete(req.request);
+            const cost = service.calculateCost(modelType, params.model, response.fullResponse);
+            const credits = this.caculateCredits(cost);
+            this.nsApi.addUsage(credits);
             return { response };
         } catch (error) {
             const err = service.handleError(error);
@@ -57,6 +64,11 @@ export class LlmDomainImpl implements LlmDomain {
     getProviderForModel(modelId: string): string | undefined {
         const modelMap = this.getAllModels();
         return modelMap[modelId];
+    }
+
+    private caculateCredits(cost: number): number {
+        // TODO actual cost conversion
+        return Math.ceil(cost * 1000);
     }
 
     private getAllModels(): Record<string, string> {

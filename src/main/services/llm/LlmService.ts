@@ -4,6 +4,7 @@ export abstract class LlmService {
 
     abstract getModels(): Record<string, any>;
     abstract complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse>;
+    abstract calculateCost(modelType: string, modelId: string, json: Record<string, any>): number;
 
     protected abstract getRequestUrl(modelType: string, model?: string): string;
     protected abstract getResponse(modelType: string, json: Record<string, any>): LlmCompleteResponse;

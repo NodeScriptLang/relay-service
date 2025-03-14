@@ -15,7 +15,6 @@ export class GeminiLlmService extends LlmService {
     async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
         const url = this.getRequestUrl(request.modelType, request.params.model);
         const body = this.getRequestBody(request.modelType, request.params);
-
         const res = await fetch(url, {
             method: request.method,
             headers: {
@@ -31,6 +30,38 @@ export class GeminiLlmService extends LlmService {
         }
         const json = await res.json();
         return this.getResponse(request.modelType, json);
+    }
+
+    calculateCost(modelType: string, modelId: string, json: Record<string, any>): number {
+        if (modelType === LlmModelType.TEXT) {
+            const model = models.text.find(m => m.id === modelId);
+            if (!model) {
+                throw new Error(`Unsupported model: ${modelId}`);
+            }
+
+            const promptTokenCount = json.usageMetadata?.promptTokenCount || 0;
+            const candidatesTokenCount = json.usageMetadata?.candidatesTokenCount || 0;
+            const contextCachingTokenCount = json.usageMetadata?.contextCachingTokenCount || 0;
+
+            const promptPrice = promptTokenCount <= 128000 ?
+                model.pricing.promptTokenCount.tiered_pricing[0].price :
+                model.pricing.promptTokenCount.tiered_pricing[1].price;
+
+            const candidatesPrice = candidatesTokenCount <= 128000 ?
+                model.pricing.candidatesTokenCount.tiered_pricing[0].price :
+                model.pricing.candidatesTokenCount.tiered_pricing[1].price;
+
+            const cachingPrice = contextCachingTokenCount <= 128000 ?
+                model.pricing.contextCachingTokenCount.tiered_pricing[0].price :
+                model.pricing.contextCachingTokenCount.tiered_pricing[1].price;
+
+            const promptCost = (promptTokenCount * promptPrice) / 1000;
+            const candidatesCost = (candidatesTokenCount * candidatesPrice) / 1000;
+            const cachingCost = (contextCachingTokenCount * cachingPrice) / 1000;
+
+            return promptCost + candidatesCost + cachingCost;
+        }
+        return 0;
     }
 
     protected getRequestUrl(modelType: string, model: string): string {

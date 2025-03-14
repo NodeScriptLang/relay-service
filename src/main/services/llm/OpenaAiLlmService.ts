@@ -44,6 +44,39 @@ export class OpenaAiLlmService extends LlmService {
         }
     }
 
+    calculateCost(modelType: string, modelId: string, json: Record<string, any>): number {
+        if (modelType === LlmModelType.TEXT) {
+            const model = models.text.find(m => m.id === modelId);
+            if (!model) {
+                throw new Error(`Unsupported model: ${modelId}`);
+            }
+
+            const promptTokens = json.usage.prompt_tokens;
+            const completionTokens = json.usage.completion_tokens;
+            const cachedTokens = json.usage.prompt_tokens_details?.cached_tokens || 0;
+            const nonCachedPromptTokens = promptTokens - cachedTokens;
+
+            const promptCost = nonCachedPromptTokens * (model.pricing['input_tokens'] / 1000);
+            const cachedCost = cachedTokens * (model.pricing['cached_input_tokens'] / 1000);
+            const completionCost = completionTokens * (model.pricing['output_tokens'] / 1000);
+
+            return promptCost + cachedCost + completionCost;
+        }
+
+        if (modelType === LlmModelType.IMAGE) {
+            const model = models.image.find(m => m.id === modelId);
+            if (!model) {
+                throw new Error(`Unsupported model: ${modelId}`);
+            }
+            // For DALL-E models, we need to calculate based on image size and quality
+            // This would need additional parameters from the request
+            // For now, returning 0 as the current implementation is incomplete
+            return 0;
+        }
+
+        return 0;
+    }
+
     protected getResponse(modelType: string, json: Record<string, any>): LlmCompleteResponse {
         if (modelType === LlmModelType.TEXT) {
             return {
@@ -112,7 +145,9 @@ export class OpenaAiLlmService extends LlmService {
 
 }
 
+// USD
 const models = {
+    // Per million tokens
     text: [
         {
             id: 'gpt-4o',
@@ -147,6 +182,7 @@ const models = {
             }
         }
     ],
+    // Per image
     image: [
         {
             id: 'dall-e-3',

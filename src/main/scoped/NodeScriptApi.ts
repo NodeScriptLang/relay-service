@@ -23,6 +23,11 @@ export class NodeScriptApi {
         return org;
     }
 
+    async addUsage(_credits: number): Promise<void> {
+        // TODO add addUsage in nodescript-platform BillingDomain
+
+    }
+
     protected createClient(): ApiProtocol {
         return createHttpClient(apiProtocol, {
             baseUrl: this.NODESCRIPT_API_URL,

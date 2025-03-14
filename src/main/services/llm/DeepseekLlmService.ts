@@ -35,6 +35,30 @@ export class DeepseekLlmService extends LlmService {
         return this.getResponse(request.modelType, json);
     }
 
+    calculateCost(modelType: string, modelId: string, json: Record<string, any>): number {
+        if (modelType === LlmModelType.TEXT) {
+            const model = models.text.find(m => m.id === modelId);
+            if (!model) {
+                throw new Error(`Unsupported model: ${modelId}`);
+            }
+
+            const pricingTier = 'standard'; // Default to standard pricing for simplicity
+            const pricing = model.pricing[pricingTier];
+
+            const promptCacheHitTokens = json.prompt_cache_hit_tokens || json.usage?.prompt_tokens_details?.cached_tokens || 0;
+            const promptCacheMissTokens = json.prompt_cache_miss_tokens ||
+                (json.usage?.prompt_tokens - (json.usage?.prompt_tokens_details?.cached_tokens || 0));
+            const completionTokens = json.usage?.completion_tokens || 0;
+
+            const cacheHitCost = promptCacheHitTokens * (pricing.prompt_cache_hit_tokens / 1000);
+            const cacheMissCost = promptCacheMissTokens * (pricing.prompt_cache_miss_tokens / 1000);
+            const completionCost = completionTokens * (pricing.completion_tokens / 1000);
+
+            return cacheHitCost + cacheMissCost + completionCost;
+        }
+        return 0;
+    }
+
     protected getRequestUrl(modelType: string): string {
         if (modelType === LlmModelType.TEXT) {
             return `${this.DEEPSEEK_BASE_URL}/chat/completions`;
