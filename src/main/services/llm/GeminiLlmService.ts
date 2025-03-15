@@ -122,9 +122,7 @@ export class GeminiLlmService extends LlmService {
 
 }
 
-// USD
 const models = {
-    // Per 1M tokens
     text: [
         {
             id: 'gemini-2.0-pro-exp-02-05',
