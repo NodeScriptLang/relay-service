@@ -35,7 +35,7 @@ export class AnthropicLlmService extends LlmService {
             throw error;
         }
         const json = await res.json();
-        return this.getResponse(request.modelType, json);
+        return this.getResponse(request.modelType, json, res.status);
     }
 
     protected getRequestUrl(modelType: string): string {
@@ -46,12 +46,13 @@ export class AnthropicLlmService extends LlmService {
         }
     }
 
-    protected getResponse(modelType: string, json: Record<string, any>): LlmCompleteResponse {
+    protected getResponse(modelType: string, json: Record<string, any>, status: number): LlmCompleteResponse {
         if (modelType === LlmModelType.TEXT) {
             return {
                 content: json.content[0].text,
                 totalTokens: json.usage.input_tokens + json.usage.output_tokens,
                 fullResponse: json,
+                status,
             };
         } else {
             throw new Error(`Unsupported model type: ${modelType}`);

@@ -33,7 +33,7 @@ export class OpenaAiLlmService extends LlmService {
             throw error;
         }
         const json = await res.json();
-        return this.getResponse(request.modelType, json);
+        return this.getResponse(request.modelType, json, res.status);
     }
 
     protected getRequestUrl(modelType: string): string {
@@ -94,17 +94,19 @@ export class OpenaAiLlmService extends LlmService {
         return 0;
     }
 
-    protected getResponse(modelType: string, json: Record<string, any>): LlmCompleteResponse {
+    protected getResponse(modelType: string, json: Record<string, any>, status: number): LlmCompleteResponse {
         if (modelType === LlmModelType.TEXT) {
             return {
                 content: json.choices[0].message.content,
                 totalTokens: json.usage.total_tokens,
                 fullResponse: json,
+                status,
             };
         } else if (modelType === LlmModelType.IMAGE) {
             return {
                 content: json.data[0].url,
                 fullResponse: json,
+                status,
             };
         } else {
             throw new Error(`Unsupported model type: ${modelType}`);

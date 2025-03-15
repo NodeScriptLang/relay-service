@@ -33,7 +33,7 @@ export class DeepseekLlmService extends LlmService {
             throw error;
         }
         const json = await res.json();
-        return this.getResponse(request.modelType, json);
+        return this.getResponse(request.modelType, json, res.status);
     }
 
     calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
@@ -68,12 +68,13 @@ export class DeepseekLlmService extends LlmService {
         }
     }
 
-    protected getResponse(modelType: string, json: Record<string, any>): LlmCompleteResponse {
+    protected getResponse(modelType: string, json: Record<string, any>, status: number): LlmCompleteResponse {
         if (modelType === LlmModelType.TEXT) {
             return {
                 content: json.choices[0].message.content,
                 totalTokens: json.usage.total_tokens,
                 fullResponse: json,
+                status
             };
         } else {
             throw new Error(`Unsupported model type: ${modelType}`);

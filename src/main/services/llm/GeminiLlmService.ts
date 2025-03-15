@@ -31,7 +31,7 @@ export class GeminiLlmService extends LlmService {
             throw error;
         }
         const json = await res.json();
-        return this.getResponse(request.modelType, json);
+        return this.getResponse(request.modelType, json, res.status);
     }
 
     calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
@@ -76,12 +76,13 @@ export class GeminiLlmService extends LlmService {
         }
     }
 
-    protected getResponse(modelType: string, json: Record<string, any>): LlmCompleteResponse {
+    protected getResponse(modelType: string, json: Record<string, any>, status: number): LlmCompleteResponse {
         if (modelType === LlmModelType.TEXT) {
             return {
                 content: json.candidates[0].content.parts[0].text,
                 totalTokens: json.usageMetadata.totalTokenCount,
                 fullResponse: json,
+                status
             };
         } else {
             throw new Error(`Unsupported model type: ${modelType}`);

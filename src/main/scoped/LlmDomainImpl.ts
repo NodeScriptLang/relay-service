@@ -11,7 +11,6 @@ import { NodeScriptApi } from './NodeScriptApi.js';
 export class LlmDomainImpl implements LlmDomain {
 
     @dep() private nsApi!: NodeScriptApi;
-
     @dep() private anthropicLlmService!: AnthropicLlmService;
     @dep() private deepseekLlmService!: DeepseekLlmService;
     @dep() private geminiLlmService!: GeminiLlmService;
@@ -51,9 +50,13 @@ export class LlmDomainImpl implements LlmDomain {
 
         try {
             const response = await service.complete(req.request);
+
             const cost = service.calculateCost(modelType, params, response.fullResponse);
-            const credits = this.caculateCredits(cost);
-            this.nsApi.addUsage(credits);
+            const millicredits = this.calculateMillicredits(cost);
+            const skuId = `llm:${providerId}:${modelType}:${params.model}`;
+            const skuName = `${providerId}:${modelType}`;
+            this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+
             return { response };
         } catch (error) {
             const err = service.handleError(error);
@@ -66,7 +69,7 @@ export class LlmDomainImpl implements LlmDomain {
         return modelMap[modelId];
     }
 
-    private caculateCredits(cost: number): number {
+    private calculateMillicredits(cost: number): number {
         // TODO actual cost conversion
         return Math.ceil(cost * 1000);
     }
