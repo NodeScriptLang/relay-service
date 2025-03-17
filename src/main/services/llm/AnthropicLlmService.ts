@@ -1,4 +1,4 @@
-import { LlmCompleteRequest, LlmCompleteResponse, LlmModelType, LlmTextModelParams } from '@nodescript/relay-protocol';
+import { LlmCompleteResponse, LlmGenerateImage, LlmGenerateStructureData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 import { LlmService } from './LlmService.js';
@@ -14,12 +14,46 @@ export class AnthropicLlmService extends LlmService {
         return models;
     }
 
-    async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
-        const url = this.getRequestUrl(request.modelType);
-        const body = this.getRequestBody(request.modelType, request.params);
+    async generateText(req: LlmGenerateText): Promise<LlmCompleteResponse> {
+        const body = this.formatTextRequestBody(req);
+        const res = await this.request('messages', 'POST', body);
+        const json = await res.json();
+        return {
+            content: json.content[0].text,
+            totalTokens: json.usage.input_tokens + json.usage.output_tokens,
+            fullResponse: json,
+            status: res.status,
+        };
+    }
 
-        const res = await fetch(url, {
-            method: request.method,
+    async generateStructuredData(req: LlmGenerateText): Promise<LlmCompleteResponse> {
+        const body = this.formatTextRequestBody(req);
+        const res = await this.request('messages', 'POST', body);
+        const json = await res.json();
+        return {
+            content: json.content[0].text,
+            totalTokens: json.usage.input_tokens + json.usage.output_tokens,
+            fullResponse: json,
+            status: res.status,
+        };
+    }
+
+    async generateImage(_req: LlmGenerateImage): Promise<LlmCompleteResponse> {
+        return {
+            content: 'Image generation is not supported by Anthropic models. Please select a different model.',
+            fullResponse: {
+                error: 'Image generation not supported',
+                suggestion: 'Use models like OpenAI\'s DALL-E for image generation tasks.'
+            },
+            status: 400,
+        };
+    }
+
+    // Helpers
+
+    private async request(path: string, method: string, body: Record<string, any>): Promise<Response> {
+        const res = await fetch(`${this.ANTHROPIC_BASE_URL}${path}`, {
+            method,
             headers: {
                 'X-Api-Key': this.LLM_ANTHROPIC_API_KEY,
                 'Content-Type': 'application/json',
@@ -34,16 +68,7 @@ export class AnthropicLlmService extends LlmService {
             (error as any).status = res.status;
             throw error;
         }
-        const json = await res.json();
-        return this.getResponse(request.modelType, json, res.status);
-    }
-
-    protected getRequestUrl(modelType: string): string {
-        if (modelType === LlmModelType.TEXT) {
-            return `${this.ANTHROPIC_BASE_URL}/messages`;
-        } else {
-            throw new Error(`Unsupported model type: ${modelType}`);
-        }
+        return res;
     }
 
     protected getResponse(modelType: string, json: Record<string, any>, status: number): LlmCompleteResponse {
@@ -83,31 +108,30 @@ export class AnthropicLlmService extends LlmService {
         return 0;
     }
 
-    protected getRequestBody(modelType: string, params: any): Record<string, any> {
-        if (modelType === LlmModelType.TEXT) {
-            return this.formatTextRequestBody(params);
-        } else {
-            throw new Error(`Unsupported model type: ${modelType}`);
+    private formatTextRequestBody(req: LlmGenerateText | LlmGenerateStructureData): Record<string, any> {
+        let data = undefined;
+        if ('data' in req) {
+            data = JSON.stringify(req.data);
         }
-    }
-
-    private formatTextRequestBody(params: Partial<LlmTextModelParams>): Record<string, any> {
-        const data = JSON.stringify(params.data);
         return {
-            'model': params.model,
+            'model': req.model,
             'messages': [
                 {
                     role: 'user',
-                    content: `${params.userPrompt}${data ? `\n\n${data}` : ''}`
+                    content: `${req.prompt}`
                 },
+                (data ?? {
+                    role: 'user',
+                    content: data
+                })
             ],
-            'max_tokens': params.maxTokens,
-            'temperature': params.temperature,
-            'top_p': params.topP,
-            'top_k': params.topK,
-            'stop_sequences': params.stopSequences,
-            'stream': params.stream,
-            'system': params.systemPrompt,
+            'max_tokens': req.params?.maxTokens,
+            'temperature': req.params?.temperature,
+            'top_p': req.params?.topP,
+            'top_k': req.params?.topK,
+            'stop_sequences': req.params?.stopSequences,
+            'stream': req.params?.stream,
+            'system': req.system,
         };
     }
 

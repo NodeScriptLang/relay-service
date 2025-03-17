@@ -1,4 +1,4 @@
-import { LlmCompleteRequest, LlmCompleteResponse, LlmModelType, LlmTextModelParams } from '@nodescript/relay-protocol';
+import { LlmCompleteResponse, LlmGenerateImage, LlmGenerateStructureData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 import { LlmService } from './LlmService.js';
@@ -14,24 +14,39 @@ export class GeminiLlmService extends LlmService {
         return models;
     }
 
-    async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
-        const url = this.getRequestUrl(request.modelType, request.params.model);
-        const body = this.getRequestBody(request.modelType, request.params);
-        const res = await fetch(url, {
-            method: request.method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: body ? JSON.stringify(body) : undefined
-        });
-        if (!res.ok) {
-            const errorText = await res.text();
-            const error = new Error(`Gemini API error: ${res.status} ${errorText}`);
-            (error as any).status = res.status;
-            throw error;
-        }
+    async generateText(req: LlmGenerateText): Promise<LlmCompleteResponse> {
+        const body = this.formatTextRequestBody(req);
+        const res = await this.request('chat/completions', req.model, 'POST', body);
         const json = await res.json();
-        return this.getResponse(request.modelType, json, res.status);
+        return {
+            content: json.candidates[0].content.parts[0].text,
+            totalTokens: json.usageMetadata.totalTokenCount,
+            fullResponse: json,
+            status: res.status,
+        };
+    }
+
+    async generateStructuredData(req: LlmGenerateText): Promise<LlmCompleteResponse> {
+        const body = this.formatTextRequestBody(req);
+        const res = await this.request('chat/completions', req.model, 'POST', body);
+        const json = await res.json();
+        return {
+            content: json.candidates[0].content.parts[0].text,
+            totalTokens: json.usageMetadata.totalTokenCount,
+            fullResponse: json,
+            status: res.status,
+        };
+    }
+
+    async generateImage(req: LlmGenerateImage): Promise<LlmCompleteResponse> {
+        const body = this.formatImageRequestBody(req);
+        const res = await this.request('images/generations', req.model, 'POST', body);
+        const json = await res.json();
+        return {
+            content: json.data[0].url,
+            fullResponse: json,
+            status: res.status,
+        };
     }
 
     calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
@@ -66,56 +81,66 @@ export class GeminiLlmService extends LlmService {
         return 0;
     }
 
-    protected getRequestUrl(modelType: string, model: string): string {
-        if (modelType === LlmModelType.TEXT) {
-            const url = new URL(`${this.GEMINI_BASE_URL}/models/${model}:generateContent`);
-            url.searchParams.append('key', this.LLM_GEMINI_API_KEY);
-            return url.toString();
-        } else {
-            throw new Error(`Unsupported model type: ${modelType}`);
+    // Helpers
+
+    private async request(path: string, model: string, method: string, body: Record<string, any>): Promise<Response> {
+        const url = new URL(`${this.GEMINI_BASE_URL}/models/${model}:${path}`);
+        url.searchParams.append('key', this.LLM_GEMINI_API_KEY);
+        const res = await fetch(url, {
+            method,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: body ? JSON.stringify(body) : undefined
+        });
+        if (!res.ok) {
+            const errorText = await res.text();
+            const error = new Error(`Gemini API error: ${res.status} ${errorText}`);
+            (error as any).status = res.status;
+            throw error;
         }
+        return res;
     }
 
-    protected getResponse(modelType: string, json: Record<string, any>, status: number): LlmCompleteResponse {
-        if (modelType === LlmModelType.TEXT) {
-            return {
-                content: json.candidates[0].content.parts[0].text,
-                totalTokens: json.usageMetadata.totalTokenCount,
-                fullResponse: json,
-                status
-            };
-        } else {
-            throw new Error(`Unsupported model type: ${modelType}`);
+    private formatTextRequestBody(req: LlmGenerateText | LlmGenerateStructureData): Record<string, any> {
+        let data = undefined;
+        if ('data' in req) {
+            data = JSON.stringify(req.data);
         }
-    }
-
-    protected getRequestBody(modelType: string, params: any): Record<string, any> {
-        if (modelType === LlmModelType.TEXT) {
-            return this.formatTextRequestBody(params);
-        } else {
-            throw new Error(`Unsupported model type: ${modelType}`);
-        }
-    }
-
-    private formatTextRequestBody(params: Partial<LlmTextModelParams>): Record<string, any> {
-        const data = JSON.stringify(params.data);
         return {
             'contents': [
                 {
                     role: 'user',
                     parts: [
                         {
-                            text: `${params.systemPrompt}\n\n${params.userPrompt}${data ? `\n\n${data}` : ''}`
-                        }
+                            text: req.system
+                        },
+                        {
+                            text: req.prompt
+                        },
+                        (data ?? {
+                            text: data
+                        })
                     ]
                 },
             ],
             'generationConfig': {
-                'maxOutputTokens': params.maxTokens,
-                'temperature': params.temperature,
-                'top_p': params.topP,
-                'top_k': params.topK,
-                'stop_sequences': params.stopSequences,
+                'responseModalities': ['Text'],
+                'maxOutputTokens': req.params?.maxTokens,
+                'temperature': req.params?.temperature,
+                'top_p': req.params?.topP,
+                'top_k': req.params?.topK,
+                'stop_sequences': req.params?.stopSequences,
+            }
+        };
+    }
+
+    private formatImageRequestBody(req: LlmGenerateImage): Record<string, any> {
+        return {
+            'model': req.model,
+            'prompt': req.prompt,
+            'generationConfig': {
+                'responseModalities': ['Text']
             }
         };
     }

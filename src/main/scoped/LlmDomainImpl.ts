@@ -1,4 +1,4 @@
-import { LlmCompleteRequest, LlmCompleteResponse, LlmDomain, LlmModelType } from '@nodescript/relay-protocol';
+import { LlmCompleteResponse, LlmDomain, LlmGenerateImage, LlmGenerateStructureData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
@@ -39,11 +39,11 @@ export class LlmDomainImpl implements LlmDomain {
         return { models };
     }
 
-    async complete(req: { request: LlmCompleteRequest }): Promise<{ response: LlmCompleteResponse }> {
-        const { modelType, params } = req.request;
-        const providerId = this.getProviderForModel(params.model);
+    async generateText(req: { request: LlmGenerateText }): Promise<{ response: LlmCompleteResponse }> {
+        const { model } = req.request;
+        const providerId = this.getProviderForModel(model);
         if (!providerId) {
-            throw new Error(`Unsupported LLM model: ${params.model}`);
+            throw new Error(`Unsupported LLM model: ${model}`);
         }
 
         const service = this.llmServices[providerId];
@@ -52,13 +52,13 @@ export class LlmDomainImpl implements LlmDomain {
         }
 
         try {
-            const response = await service.complete(req.request);
+            const response = await service.generateText(req.request);
 
-            const cost = service.calculateCost(modelType, params, response.fullResponse);
-            const millicredits = this.calculateMillicredits(cost);
-            const skuId = `llm:${providerId}:${modelType}:${params.model}`;
-            const skuName = `${providerId}:${modelType}`;
-            this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+            // const cost = service.calculateCost('text', params, response.fullResponse);
+            // const millicredits = this.calculateMillicredits(cost);
+            // const skuId = `llm:${providerId}:${modelType}:${params.model}`;
+            // const skuName = `${providerId}:${modelType}`;
+            // this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
 
             return { response };
         } catch (error) {
@@ -66,6 +66,91 @@ export class LlmDomainImpl implements LlmDomain {
             throw err;
         }
     }
+
+    async generateStructureData(req: { request: LlmGenerateStructureData }): Promise<{ response: LlmCompleteResponse }> {
+        const { model } = req.request;
+        const providerId = this.getProviderForModel(model);
+        if (!providerId) {
+            throw new Error(`Unsupported LLM model: ${model}`);
+        }
+
+        const service = this.llmServices[providerId];
+        if (!service) {
+            throw new Error(`Unsupported LLM provider: ${providerId}`);
+        }
+
+        try {
+            const response = await service.generateStructuredData(req.request);
+
+            // const cost = service.calculateCost('text', params, response.fullResponse);
+            // const millicredits = this.calculateMillicredits(cost);
+            // const skuId = `llm:${providerId}:${modelType}:${params.model}`;
+            // const skuName = `${providerId}:${modelType}`;
+            // this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+
+            return { response };
+        } catch (error) {
+            const err = service.handleError(error);
+            throw err;
+        }
+    }
+
+    async generateImage(req: { request: LlmGenerateImage }): Promise<{ response: LlmCompleteResponse }> {
+        const { model } = req.request;
+        const providerId = this.getProviderForModel(model);
+        if (!providerId) {
+            throw new Error(`Unsupported LLM model: ${model}`);
+        }
+
+        const service = this.llmServices[providerId];
+        if (!service) {
+            throw new Error(`Unsupported LLM provider: ${providerId}`);
+        }
+
+        try {
+            const response = await service.generateImage(req.request);
+
+            // const cost = service.calculateCost('text', params, response.fullResponse);
+            // const millicredits = this.calculateMillicredits(cost);
+            // const skuId = `llm:${providerId}:${modelType}:${params.model}`;
+            // const skuName = `${providerId}:${modelType}`;
+            // this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+
+            return { response };
+        } catch (error) {
+            const err = service.handleError(error);
+            throw err;
+        }
+    }
+
+    // TODO remove
+    // async complete(req: { request: LlmCompleteRequest }): Promise<{ response: LlmCompleteResponse }> {
+    //     const { modelType, params } = req.request;
+    //     const providerId = this.getProviderForModel(params.model);
+    //     if (!providerId) {
+    //         throw new Error(`Unsupported LLM model: ${params.model}`);
+    //     }
+
+    //     const service = this.llmServices[providerId];
+    //     if (!service) {
+    //         throw new Error(`Unsupported LLM provider: ${providerId}`);
+    //     }
+
+    //     try {
+    //         const response = await service.complete(req.request);
+
+    //         const cost = service.calculateCost(modelType, params, response.fullResponse);
+    //         const millicredits = this.calculateMillicredits(cost);
+    //         const skuId = `llm:${providerId}:${modelType}:${params.model}`;
+    //         const skuName = `${providerId}:${modelType}`;
+    //         this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+
+    //         return { response };
+    //     } catch (error) {
+    //         const err = service.handleError(error);
+    //         throw err;
+    //     }
+    // }
 
     getProviderForModel(modelId: string): string | undefined {
         const modelMap = this.getAllModels();

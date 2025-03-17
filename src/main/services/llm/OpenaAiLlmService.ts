@@ -1,11 +1,11 @@
-import { LlmCompleteRequest, LlmCompleteResponse, LlmImageModelParams, LlmModelType, LlmTextModelParams } from '@nodescript/relay-protocol';
+import { LlmCompleteResponse, LlmGenerateImage, LlmGenerateStructureData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 import { LlmService } from './LlmService.js';
 
 export class OpenaAiLlmService extends LlmService {
 
-    @config({ default: 'https://api.openai.com/v1' }) OPENAI_BASE_URL!: string;
+    @config({ default: 'https://api.openai.com/v1/' }) OPENAI_BASE_URL!: string;
     @config({ default: 1_000_000 }) OPENAI_PRICE_PER_TOKENS!: number;
 
     @config() LLM_OPENAI_API_KEY!: string;
@@ -14,36 +14,39 @@ export class OpenaAiLlmService extends LlmService {
         return models;
     }
 
-    async complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse> {
-        const url = this.getRequestUrl(request.modelType);
-        const body = this.getRequestBody(request.modelType, request.params);
-
-        const res = await fetch(url, {
-            method: request.method,
-            headers: {
-                'Authorization': `Bearer ${this.LLM_OPENAI_API_KEY}`,
-                'Content-Type': 'application/json',
-            },
-            body: body ? JSON.stringify(body) : undefined
-        });
-        if (!res.ok) {
-            const errorText = await res.text();
-            const error = new Error(`OpenAI API error: ${res.status} ${errorText}`);
-            (error as any).status = res.status;
-            throw error;
-        }
+    async generateText(req: LlmGenerateText): Promise<LlmCompleteResponse> {
+        const body = this.formatTextRequestBody(req);
+        const res = await this.request('chat/completions', 'POST', body);
         const json = await res.json();
-        return this.getResponse(request.modelType, json, res.status);
+        return {
+            content: json.choices[0].message.content,
+            totalTokens: json.usage.total_tokens,
+            fullResponse: json,
+            status: res.status,
+        };
     }
 
-    protected getRequestUrl(modelType: string): string {
-        if (modelType === LlmModelType.TEXT) {
-            return `${this.OPENAI_BASE_URL}/chat/completions`;
-        } else if (modelType === LlmModelType.IMAGE) {
-            return `${this.OPENAI_BASE_URL}/images/generations`;
-        } else {
-            throw new Error(`Unsupported model type: ${modelType}`);
-        }
+    async generateStructuredData(req: LlmGenerateText): Promise<LlmCompleteResponse> {
+        const body = this.formatTextRequestBody(req);
+        const res = await this.request('chat/completions', 'POST', body);
+        const json = await res.json();
+        return {
+            content: json.choices[0].message.content,
+            totalTokens: json.usage.total_tokens,
+            fullResponse: json,
+            status: res.status,
+        };
+    }
+
+    async generateImage(req: LlmGenerateImage): Promise<LlmCompleteResponse> {
+        const body = this.formatImageRequestBody(req);
+        const res = await this.request('images/generations', 'POST', body);
+        const json = await res.json();
+        return {
+            content: json.data[0].url,
+            fullResponse: json,
+            status: res.status,
+        };
     }
 
     calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
@@ -94,71 +97,69 @@ export class OpenaAiLlmService extends LlmService {
         return 0;
     }
 
-    protected getResponse(modelType: string, json: Record<string, any>, status: number): LlmCompleteResponse {
-        if (modelType === LlmModelType.TEXT) {
-            return {
-                content: json.choices[0].message.content,
-                totalTokens: json.usage.total_tokens,
-                fullResponse: json,
-                status,
-            };
-        } else if (modelType === LlmModelType.IMAGE) {
-            return {
-                content: json.data[0].url,
-                fullResponse: json,
-                status,
-            };
-        } else {
-            throw new Error(`Unsupported model type: ${modelType}`);
+    // Helpers
+
+    private async request(path: string, method: string, body: Record<string, any>): Promise<Response> {
+        const res = await fetch(`${this.OPENAI_BASE_URL}${path}`, {
+            method,
+            headers: {
+                'Authorization': `Bearer ${this.LLM_OPENAI_API_KEY}`,
+                'Content-Type': 'application/json',
+            },
+            body: body ? JSON.stringify(body) : undefined
+        });
+        if (!res.ok) {
+            const errorText = await res.text();
+            const error = new Error(`OpenAI API error: ${res.status} ${errorText}`);
+            (error as any).status = res.status;
+            throw error;
         }
+        return res;
     }
 
-    protected getRequestBody(modelType: string, params: any): Record<string, any> {
-        if (modelType === LlmModelType.TEXT) {
-            return this.formatTextRequestBody(params);
-        } else if (modelType === LlmModelType.IMAGE) {
-            return this.formatImageRequestBody(params);
-        } else {
-            throw new Error(`Unsupported model type: ${modelType}`);
+    private formatTextRequestBody(req: LlmGenerateText | LlmGenerateStructureData): Record<string, any> {
+        let data = undefined;
+        if ('data' in req) {
+            data = JSON.stringify(req.data);
         }
-    }
-
-    private formatTextRequestBody(params: Partial<LlmTextModelParams>): Record<string, any> {
-        const data = JSON.stringify(params.data);
         return {
-            'model': params.model,
+            'model': req.model,
             'messages': [
                 {
                     role: 'system',
-                    content: params.systemPrompt,
+                    content: req.system,
                 },
                 {
                     role: 'user',
-                    content: `${params.userPrompt}${data ? `\n\n${data}` : ''}`,
+                    content: req.prompt,
                 },
+                (data ?? {
+                    role: 'user',
+                    content: data
+                })
             ],
-            'max_tokens': params.maxTokens,
-            'temperature': params.temperature,
-            'top_p': params.topP,
-            'stop': params.stopSequences,
-            'frequency_penalty': params.frequencyPenalty,
-            'presence_penalty': params.presencePenalty,
-            'logit_bias': params.logitBias,
-            'response_format': params.responseFormat,
-            'seed': params.seed,
-            'stream': params.stream
+            'max_tokens': req.params?.maxTokens,
+            'temperature': req.params?.temperature,
+            'top_p': req.params?.topP,
+            'stop': req.params?.stopSequences,
+            'frequency_penalty': req.params?.frequencyPenalty,
+            'presence_penalty': req.params?.presencePenalty,
+            'logit_bias': req.params?.logitBias,
+            'response_format': req.params?.responseFormat,
+            'seed': req.params?.seed,
+            'stream': req.params?.stream
         };
     }
 
-    private formatImageRequestBody(params: Partial<LlmImageModelParams>): Record<string, any> {
+    private formatImageRequestBody(req: LlmGenerateImage): Record<string, any> {
         return {
-            'model': params.model,
-            'prompt': params.userPrompt,
-            'n': params.n,
-            'size': params.size,
-            'style': params.style,
-            'user': params.user,
-            'response_format': params.responseFormat,
+            'model': req.model,
+            'prompt': req.prompt,
+            'n': req.params?.n,
+            'size': req.params?.size,
+            'style': req.params?.style,
+            'user': req.params?.user,
+            'response_format': req.params?.responseFormat,
         };
     }
 
