@@ -2,7 +2,7 @@ import { DomainDef } from '@nodescript/protocomm';
 
 import { LlmCompleteResponse, LlmCompleteResponseSchema } from '../schema/llm/LlmCompleteResponse.js';
 import { LlmGenerateImage, LlmGenerateImageSchema } from '../schema/llm/LlmGenerateImage.js';
-import { LlmGenerateStructureData, LlmGenerateStructureDataSchema } from '../schema/llm/LlmGenerateStructureData.js';
+import { LlmGenerateStructuredData, LlmGenerateStructuredDataSchema } from '../schema/llm/LlmGenerateStructuredData.js';
 import { LlmGenerateText, LlmGenerateTextSchema } from '../schema/llm/LlmGenerateText.js';
 import { LlmModelType, LlmModelTypeSchema } from '../schema/llm/LlmModelType.js';
 
@@ -20,8 +20,8 @@ export interface LlmDomain {
         response: LlmCompleteResponse;
     }>;
 
-    generateStructureData(req: {
-        request: LlmGenerateStructureData;
+    generateStructuredData(req: {
+        request: LlmGenerateStructuredData;
     }): Promise<{
         response: LlmCompleteResponse;
     }>;
@@ -58,10 +58,10 @@ export const LlmDomain: DomainDef<LlmDomain> = {
                 response: LlmCompleteResponseSchema.schema,
             }
         },
-        generateStructureData: {
+        generateStructuredData: {
             type: 'command',
             params: {
-                request: LlmGenerateStructureDataSchema.schema,
+                request: LlmGenerateStructuredDataSchema.schema,
             },
             returns: {
                 response: LlmCompleteResponseSchema.schema,

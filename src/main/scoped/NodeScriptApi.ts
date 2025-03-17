@@ -1,4 +1,4 @@
-import { ApiProtocol, apiProtocol, Org, Workspace } from '@nodescript/api-proto';
+import { ApiProtocol, apiProtocol, Org, UsageLabels, Workspace } from '@nodescript/api-proto';
 import { HttpContext } from '@nodescript/http-server';
 import { createHttpClient } from '@nodescript/protocomm';
 import { config } from 'mesh-config';
@@ -26,24 +26,24 @@ export class NodeScriptApi {
         return org;
     }
 
-    async addUsage(_millicredits: number, _skuId: string, _skuName: string, _status: number): Promise<void> {
-        // const token = this.authContext.requireAuth();
-        // if (!token.orgId || !token.workspaceId) {
-        //     throw new Error('Invalid token');
-        // }
-        // const org = await this.getOrg(token.orgId);
-        // const workspace = await this.getWorkspace(token.workspaceId);
-        // const usage: UsageLabels = {
-        //     orgId: org.id,
-        //     orgName: org.displayName,
-        //     workspaceId: workspace.id,
-        //     workspaceName: workspace.displayName,
-        //     skuId,
-        //     skuName,
-        //     // status: String(status),
-        // };
-        // const client = this.createClient();
-        // await client.Billing.addUsage({ millicredits, usage });
+    async addUsage(millicredits: number, skuId: string, skuName: string, status: number): Promise<void> {
+        const token = this.authContext.requireAuth();
+        if (!token.orgId || !token.workspaceId) {
+            throw new Error('Invalid token');
+        }
+        const org = await this.getOrg(token.orgId);
+        const workspace = await this.getWorkspace(token.workspaceId);
+        const usage: UsageLabels = {
+            orgId: org.id,
+            orgName: org.displayName,
+            workspaceId: workspace.id,
+            workspaceName: workspace.displayName,
+            skuId,
+            skuName,
+            status: String(status),
+        };
+        const client = this.createClient();
+        await client.Billing.addUsage({ millicredits, usage });
     }
 
     protected createClient(): ApiProtocol {

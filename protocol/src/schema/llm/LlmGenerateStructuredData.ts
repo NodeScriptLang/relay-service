@@ -2,7 +2,7 @@ import { Schema } from 'airtight';
 
 import { LlmTextModelParams, LlmTextModelParamsSchema } from './LlmTextModelParams.js';
 
-export interface LlmGenerateStructureData {
+export interface LlmGenerateStructuredData {
     model: string;
     prompt: string;
     system: string;
@@ -10,7 +10,7 @@ export interface LlmGenerateStructureData {
     params?: LlmTextModelParams;
 }
 
-export const LlmGenerateStructureDataSchema = new Schema<LlmGenerateStructureData>({
+export const LlmGenerateStructuredDataSchema = new Schema<LlmGenerateStructuredData>({
     type: 'object',
     properties: {
         model: { type: 'string' },

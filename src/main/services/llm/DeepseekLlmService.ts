@@ -1,4 +1,4 @@
-import { LlmCompleteResponse, LlmGenerateImage, LlmGenerateStructureData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
+import { LlmCompleteResponse, LlmGenerateImage, LlmGenerateStructuredData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 import { LlmService } from './LlmService.js';
@@ -48,28 +48,22 @@ export class DeepseekLlmService extends LlmService {
         };
     }
 
-    calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
-        if (modelType === LlmModelType.TEXT) {
-            const model = models.text.find(m => m.id === params.model);
-            if (!model) {
-                throw new Error(`Unsupported model: ${params.model}`);
-            }
-
-            const pricingTier = 'standard'; // Default to standard pricing for simplicity
-            const pricing = model.pricing[pricingTier];
-
-            const promptCacheHitTokens = json.prompt_cache_hit_tokens || json.usage?.prompt_tokens_details?.cached_tokens || 0;
-            const promptCacheMissTokens = json.prompt_cache_miss_tokens ||
-                (json.usage?.prompt_tokens - (json.usage?.prompt_tokens_details?.cached_tokens || 0));
-            const completionTokens = json.usage?.completion_tokens || 0;
-
-            const cacheHitCost = promptCacheHitTokens * (pricing.prompt_cache_hit_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
-            const cacheMissCost = promptCacheMissTokens * (pricing.prompt_cache_miss_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
-            const completionCost = completionTokens * (pricing.completion_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
-
-            return cacheHitCost + cacheMissCost + completionCost;
+    calculateCost(modelId: string, json: Record<string, any>): number {
+        const model = models.find(m => m.id === modelId);
+        if (!model) {
+            throw new Error(`Unsupported model: ${modelId}`);
         }
-        return 0;
+
+        const promptCacheHitTokens = json.prompt_cache_hit_tokens || json.usage?.prompt_tokens_details?.cached_tokens || 0;
+        const promptCacheMissTokens = json.prompt_cache_miss_tokens ||
+            (json.usage?.prompt_tokens - (json.usage?.prompt_tokens_details?.cached_tokens || 0));
+        const completionTokens = json.usage?.completion_tokens || 0;
+
+        const cacheHitCost = promptCacheHitTokens * (model.pricing.prompt_cache_hit_tokens / model.tokenDivisor);
+        const cacheMissCost = promptCacheMissTokens * (model.pricing.prompt_cache_miss_tokens / model.tokenDivisor);
+        const completionCost = completionTokens * (model.pricing.completion_tokens / model.tokenDivisor);
+
+        return cacheHitCost + cacheMissCost + completionCost;
     }
 
     // Helpers
@@ -92,14 +86,14 @@ export class DeepseekLlmService extends LlmService {
         return res;
     }
 
-    private formatTextRequestBody(req: LlmGenerateText | LlmGenerateStructureData): Record<string, any> {
+    private formatTextRequestBody(req: LlmGenerateText | LlmGenerateStructuredData): Record<string, any> {
         let data = undefined;
         if ('data' in req) {
             data = JSON.stringify(req.data);
         }
         return {
-            'model': req.model,
-            'messages': [
+            model: req.model,
+            messages: [
                 {
                     role: 'system',
                     content: req.system,
@@ -115,49 +109,37 @@ export class DeepseekLlmService extends LlmService {
                     }] :
                     [])
             ],
-            'max_tokens': req.params?.maxTokens,
-            'temperature': req.params?.temperature,
-            'top_p': req.params?.topP,
-            'top_k': req.params?.topK,
-            'stop': req.params?.stopSequences,
-            'stream': req.params?.stream
+            max_tokens: req.params?.maxTokens,
+            temperature: req.params?.temperature,
+            top_p: req.params?.topP,
+            top_k: req.params?.topK,
+            stop: req.params?.stopSequences,
+            stream: req.params?.stream
         };
     }
 
 }
 
-// TODO simplify pricing
-const models = {
-    text: [
-        {
-            id: 'deepseek-chat',
-            pricing: {
-                'standard': {
-                    'prompt_cache_hit_tokens': 0.07,
-                    'prompt_cache_miss_tokens': 0.27,
-                    'completion_tokens': 1.10
-                },
-                'discount': {
-                    'prompt_cache_hit_tokens': 0.035,
-                    'prompt_cache_miss_tokens': 0.135,
-                    'completion_tokens': 0.55
-                }
-            }
-        },
-        {
-            id: 'deepseek-reasoner',
-            pricing: {
-                'standard': {
-                    'prompt_cache_hit_tokens': 0.14,
-                    'prompt_cache_miss_tokens': 0.55,
-                    'completion_tokens': 2.19
-                },
-                'discount': {
-                    'prompt_cache_hit_tokens': 0.07,
-                    'prompt_cache_miss_tokens': 0.275,
-                    'completion_tokens': 1.10
-                }
-            }
+// Simplified pricing, check https://api-docs.deepseek.com/quick_start/pricing for more details
+const models = [
+    {
+        id: 'deepseek-chat',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            prompt_cache_hit_tokens: 0.07,
+            prompt_cache_miss_tokens: 0.27,
+            completion_tokens: 1.10
         }
-    ]
-};
+    },
+    {
+        id: 'deepseek-reasoner',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            prompt_cache_hit_tokens: 0.14,
+            prompt_cache_miss_tokens: 0.55,
+            completion_tokens: 2.19
+        }
+    }
+];

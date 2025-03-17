@@ -1,4 +1,4 @@
-import { LlmCompleteResponse, LlmGenerateImage, LlmGenerateStructureData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
+import { LlmCompleteResponse, LlmGenerateImage, LlmGenerateStructuredData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 import { LlmService } from './LlmService.js';
@@ -6,8 +6,6 @@ import { LlmService } from './LlmService.js';
 export class GeminiLlmService extends LlmService {
 
     @config({ default: 'https://generativelanguage.googleapis.com/v1beta/' }) GEMINI_BASE_URL!: string;
-    @config({ default: 1_000_000 }) GEMINI_PRICE_PER_TOKENS!: number;
-
     @config() LLM_GEMINI_API_KEY!: string;
 
     getModels() {
@@ -55,36 +53,32 @@ export class GeminiLlmService extends LlmService {
         };
     }
 
-    calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
-        if (modelType === LlmModelType.TEXT) {
-            const model = models.text.find(m => m.id === params.model);
-            if (!model) {
-                throw new Error(`Unsupported model: ${params.model}`);
-            }
-
-            const promptTokenCount = json.usageMetadata?.promptTokenCount || 0;
-            const candidatesTokenCount = json.usageMetadata?.candidatesTokenCount || 0;
-            const contextCachingTokenCount = json.usageMetadata?.contextCachingTokenCount || 0;
-
-            const promptPrice = promptTokenCount <= 128000 ?
-                model.pricing.promptTokenCount.tiered_pricing[0].price :
-                model.pricing.promptTokenCount.tiered_pricing[1].price;
-
-            const candidatesPrice = candidatesTokenCount <= 128000 ?
-                model.pricing.candidatesTokenCount.tiered_pricing[0].price :
-                model.pricing.candidatesTokenCount.tiered_pricing[1].price;
-
-            const cachingPrice = contextCachingTokenCount <= 128000 ?
-                model.pricing.contextCachingTokenCount.tiered_pricing[0].price :
-                model.pricing.contextCachingTokenCount.tiered_pricing[1].price;
-
-            const promptCost = (promptTokenCount * promptPrice) / this.GEMINI_PRICE_PER_TOKENS;
-            const candidatesCost = (candidatesTokenCount * candidatesPrice) / this.GEMINI_PRICE_PER_TOKENS;
-            const cachingCost = (contextCachingTokenCount * cachingPrice) / this.GEMINI_PRICE_PER_TOKENS;
-
-            return promptCost + candidatesCost + cachingCost;
+    calculateCost(modelId: string, json: Record<string, any>): number {
+        const model = models.find(m => m.id === modelId);
+        if (!model) {
+            throw new Error(`Unsupported model: ${modelId}`);
         }
-        return 0;
+        const promptTokenCount = json.usageMetadata?.promptTokenCount || 0;
+        const candidatesTokenCount = json.usageMetadata?.candidatesTokenCount || 0;
+        const contextCachingTokenCount = json.usageMetadata?.contextCachingTokenCount || 0;
+
+        const promptPrice = promptTokenCount <= 128000 ?
+            model.pricing.promptTokenCount.tiered_pricing[0].price :
+            model.pricing.promptTokenCount.tiered_pricing[1].price;
+
+        const candidatesPrice = candidatesTokenCount <= 128000 ?
+            model.pricing.candidatesTokenCount.tiered_pricing[0].price :
+            model.pricing.candidatesTokenCount.tiered_pricing[1].price;
+
+        const cachingPrice = contextCachingTokenCount <= 128000 ?
+            model.pricing.contextCachingTokenCount.tiered_pricing[0].price :
+            model.pricing.contextCachingTokenCount.tiered_pricing[1].price;
+
+        const promptCost = (promptTokenCount * promptPrice) / model.tokenDivisor;
+        const candidatesCost = (candidatesTokenCount * candidatesPrice) / model.tokenDivisor;
+        const cachingCost = (contextCachingTokenCount * cachingPrice) / model.tokenDivisor;
+
+        return promptCost + candidatesCost + cachingCost;
     }
 
     // Helpers
@@ -108,13 +102,21 @@ export class GeminiLlmService extends LlmService {
         return res;
     }
 
-    private formatTextRequestBody(req: LlmGenerateText | LlmGenerateStructureData): Record<string, any> {
+    private formatTextRequestBody(req: LlmGenerateText | LlmGenerateStructuredData): Record<string, any> {
+        const parts = [
+            { text: req.prompt }
+        ];
+
         let data = undefined;
         if ('data' in req) {
             data = JSON.stringify(req.data);
         }
+        if (data) {
+            parts.push({ text: data });
+        }
+
         return {
-            'contents': [
+            contents: [
                 {
                     role: 'user',
                     parts: [
@@ -125,33 +127,23 @@ export class GeminiLlmService extends LlmService {
                 },
                 {
                     role: 'user',
-                    parts: [
-                        {
-                            text: req.prompt
-                        },
-                        ...(data ?
-                            [{
-                                role: 'user',
-                                content: data
-                            }] :
-                            [])
-                    ]
-                },
+                    parts: parts
+                }
             ],
-            'generationConfig': {
-                'responseModalities': ['Text'],
-                'maxOutputTokens': req.params?.maxTokens,
-                'temperature': req.params?.temperature,
-                'top_p': req.params?.topP,
-                'top_k': req.params?.topK,
-                'stop_sequences': req.params?.stopSequences,
+            generationConfig: {
+                responseModalities: ['Text'],
+                maxOutputTokens: req.params?.maxTokens,
+                temperature: req.params?.temperature,
+                top_p: req.params?.topP,
+                top_k: req.params?.topK,
+                stop_sequences: req.params?.stopSequences,
             }
         };
     }
 
     private formatImageRequestBody(req: LlmGenerateImage): Record<string, any> {
         return {
-            'contents': [
+            contents: [
                 {
                     role: 'user',
                     parts: [
@@ -169,185 +161,189 @@ export class GeminiLlmService extends LlmService {
                     ]
                 }
             ],
-            'generationConfig': {
-                'responseModalities': ['Text', 'Image']
+            generationConfig: {
+                responseModalities: ['Text', 'Image']
             }
         };
     }
 
 }
 
-const models = {
-    text: [
-        {
-            id: 'gemini-2.0-pro-exp-02-05',
-            pricing: {
-                'promptTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 1.25
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 2.50
-                        }
-                    ]
-                },
-                'candidatesTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 5.00
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 10.00
-                        }
-                    ]
-                },
-                'contextCachingTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 0.3125
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 0.625
-                        }
-                    ]
-                },
-                'contextCachingStorage': 4.50
-            }
-        },
-        {
-            id: 'gemini-1.5-pro-001',
-            pricing: {
-                'promptTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 1.25
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 2.50
-                        }
-                    ]
-                },
-                'candidatesTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 5.00
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 10.00
-                        }
-                    ]
-                },
-                'contextCachingTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 0.3125
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 0.625
-                        }
-                    ]
-                },
-                'contextCachingStorage': 4.50
-            }
-        },
-        {
-            id: 'gemini-1.5-flash-001',
-            pricing: {
-                'promptTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 0.075
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 0.15
-                        }
-                    ]
-                },
-                'candidatesTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 0.30
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 0.60
-                        }
-                    ]
-                },
-                'contextCachingTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 0.01875
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 0.0375
-                        }
-                    ]
-                },
-                'contextCachingStorage': 1.00
-            }
+const models = [
+    {
+        id: 'gemini-2.0-pro-exp-02-05',
+        tokenDivisor: 1_000_000,
+        modelType: [LlmModelType.TEXT],
+        pricing: {
+            promptTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 1.25
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 2.50
+                    }
+                ]
+            },
+            candidatesTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 5.00
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 10.00
+                    }
+                ]
+            },
+            contextCachingTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 0.3125
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 0.625
+                    }
+                ]
+            },
+            contextCachingStorage: 4.50
         }
-    ],
-    image: [
-        {
-            id: 'gemini-2.0-flash-exp-image-generation',
-            pricing: {
-                'promptTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 0.075
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 0.15
-                        }
-                    ]
-                },
-                'candidatesTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 0.30
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 0.60
-                        }
-                    ]
-                },
-                'contextCachingTokenCount': {
-                    'tiered_pricing': [
-                        {
-                            'max_tokens': 128000,
-                            'price': 0.01875
-                        },
-                        {
-                            'min_tokens': 128001,
-                            'price': 0.0375
-                        }
-                    ]
-                },
-                'contextCachingStorage': 1.00
-            }
+    },
+    {
+        id: 'gemini-1.5-pro-001',
+        tokenDivisor: 1_000_000,
+        modelType: [LlmModelType.TEXT],
+        pricing: {
+            promptTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 1.25
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 2.50
+                    }
+                ]
+            },
+            candidatesTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 5.00
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 10.00
+                    }
+                ]
+            },
+            contextCachingTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 0.3125
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 0.625
+                    }
+                ]
+            },
+            contextCachingStorage: 4.50
         }
-    ]
-};
+    },
+    {
+        id: 'gemini-1.5-flash-001',
+        tokenDivisor: 1_000_000,
+        modelType: [LlmModelType.TEXT],
+        pricing: {
+            promptTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 0.075
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 0.15
+                    }
+                ]
+            },
+            candidatesTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 0.30
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 0.60
+                    }
+                ]
+            },
+            contextCachingTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 0.01875
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 0.0375
+                    }
+                ]
+            },
+            contextCachingStorage: 1.00
+        }
+    },
+    {
+        id: 'gemini-2.0-flash-exp-image-generation',
+        tokenDivisor: 1_000_000,
+        modelType: [LlmModelType.TEXT, LlmModelType.IMAGE],
+        pricing: {
+            promptTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 0.075
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 0.15
+                    }
+                ]
+            },
+            candidatesTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 0.30
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 0.60
+                    }
+                ]
+            },
+            contextCachingTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 128000,
+                        price: 0.01875
+                    },
+                    {
+                        min_tokens: 128001,
+                        price: 0.0375
+                    }
+                ]
+            },
+            contextCachingStorage: 1.00
+        }
+    }
+];

@@ -1,4 +1,4 @@
-import { LlmCompleteResponse, LlmGenerateImage, LlmGenerateStructureData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
+import { LlmCompleteResponse, LlmGenerateImage, LlmGenerateStructuredData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 import { LlmService } from './LlmService.js';
@@ -6,8 +6,6 @@ import { LlmService } from './LlmService.js';
 export class OpenaAiLlmService extends LlmService {
 
     @config({ default: 'https://api.openai.com/v1/' }) OPENAI_BASE_URL!: string;
-    @config({ default: 1_000_000 }) OPENAI_PRICE_PER_TOKENS!: number;
-
     @config() LLM_OPENAI_API_KEY!: string;
 
     getModels() {
@@ -49,31 +47,28 @@ export class OpenaAiLlmService extends LlmService {
         };
     }
 
-    calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
-        if (modelType === LlmModelType.TEXT) {
-            const model = models.text.find(m => m.id === params.model);
-            if (!model) {
-                throw new Error(`Unsupported model: ${params.model}`);
-            }
+    calculateCost(modelId: string, json: Record<string, any>, params: Record<string, any>): number {
+        const model = models.find(m => m.id === modelId);
+        if (!model) {
+            throw new Error(`Unsupported model: ${modelId}`);
+        }
+
+        if (model.modelType.includes(LlmModelType.TEXT)) {
+            const textModel = model as TextModel;
 
             const promptTokens = json.usage.prompt_tokens;
             const completionTokens = json.usage.completion_tokens;
             const cachedTokens = json.usage.prompt_tokens_details?.cached_tokens || 0;
             const nonCachedPromptTokens = promptTokens - cachedTokens;
 
-            const promptCost = nonCachedPromptTokens * (model.pricing['input_tokens'] / this.OPENAI_PRICE_PER_TOKENS);
-            const cachedCost = cachedTokens * (model.pricing['cached_input_tokens'] / this.OPENAI_PRICE_PER_TOKENS);
-            const completionCost = completionTokens * (model.pricing['output_tokens'] / this.OPENAI_PRICE_PER_TOKENS);
+            const promptCost = nonCachedPromptTokens * (textModel.pricing['input_tokens'] / model.tokenDivisor);
+            const cachedCost = cachedTokens * (textModel.pricing['cached_input_tokens'] / model.tokenDivisor);
+            const completionCost = completionTokens * (textModel.pricing['output_tokens'] / model.tokenDivisor);
 
             return promptCost + cachedCost + completionCost;
         }
 
-        if (modelType === LlmModelType.IMAGE) {
-            const model = models.image.find(m => m.id === params.model);
-            if (!model) {
-                throw new Error(`Unsupported model: ${params.model}`);
-            }
-
+        if (model.modelType.includes(LlmModelType.IMAGE)) {
             const size: ImageSize = params.size || '1024x1024';
             const quality: ImageQuality = params.quality || 'standard';
             const count = params.n || 1;
@@ -93,7 +88,6 @@ export class OpenaAiLlmService extends LlmService {
                 return sizePrice * count;
             }
         }
-
         return 0;
     }
 
@@ -117,14 +111,14 @@ export class OpenaAiLlmService extends LlmService {
         return res;
     }
 
-    private formatTextRequestBody(req: LlmGenerateText | LlmGenerateStructureData): Record<string, any> {
+    private formatTextRequestBody(req: LlmGenerateText | LlmGenerateStructuredData): Record<string, any> {
         let data = undefined;
         if ('data' in req) {
             data = JSON.stringify(req.data);
         }
         return {
-            'model': req.model,
-            'messages': [
+            model: req.model,
+            messages: [
                 {
                     role: 'system',
                     content: req.system,
@@ -140,28 +134,28 @@ export class OpenaAiLlmService extends LlmService {
                     }] :
                     [])
             ],
-            'max_tokens': req.params?.maxTokens,
-            'temperature': req.params?.temperature,
-            'top_p': req.params?.topP,
-            'stop': req.params?.stopSequences,
-            'frequency_penalty': req.params?.frequencyPenalty,
-            'presence_penalty': req.params?.presencePenalty,
-            'logit_bias': req.params?.logitBias,
-            'response_format': req.params?.responseFormat,
-            'seed': req.params?.seed,
-            'stream': req.params?.stream
+            max_tokens: req.params?.maxTokens,
+            temperature: req.params?.temperature,
+            top_p: req.params?.topP,
+            stop: req.params?.stopSequences,
+            frequency_penalty: req.params?.frequencyPenalty,
+            presence_penalty: req.params?.presencePenalty,
+            logit_bias: req.params?.logitBias,
+            response_format: req.params?.responseFormat,
+            seed: req.params?.seed,
+            stream: req.params?.stream
         };
     }
 
     private formatImageRequestBody(req: LlmGenerateImage): Record<string, any> {
         return {
-            'model': req.model,
-            'prompt': req.prompt,
-            'n': req.params?.n,
-            'size': req.params?.size,
-            'style': req.params?.style,
-            'user': req.params?.user,
-            'response_format': req.params?.responseFormat,
+            model: req.model,
+            prompt: req.prompt,
+            n: req.params?.n,
+            size: req.params?.size,
+            style: req.params?.style,
+            user: req.params?.user,
+            response_format: req.params?.responseFormat,
         };
     }
 
@@ -170,70 +164,89 @@ export class OpenaAiLlmService extends LlmService {
 type ImageQuality = 'standard' | 'hd';
 type ImageSize = '256x256' | '512x512' | '1024x1024' | '1024x1792' | '1792x1024';
 
-const models = {
-    text: [
-        {
-            id: 'gpt-4o',
-            pricing: {
-                'input_tokens': 2.50,
-                'cached_input_tokens': 1.25,
-                'output_tokens': 10.00
-            }
-        },
-        {
-            id: 'gpt-4o-mini',
-            pricing: {
-                'input_tokens': 0.15,
-                'cached_input_tokens': 0.075,
-                'output_tokens': 0.60
-            }
-        },
-        {
-            id: 'gpt-4-turbo',
-            pricing: {
-                'input_tokens': 0.03,
-                'cached_input_tokens': 0.015,
-                'output_tokens': 0.06
-            }
-        },
-        {
-            id: 'gpt-3.5-turbo',
-            pricing: {
-                'input_tokens': 0.015,
-                'cached_input_tokens': 0.0075,
-                'output_tokens': 0.020
+interface TextModel {
+    id: string;
+    modelType: LlmModelType[];
+    tokenDivisor: number;
+    pricing: {
+        input_tokens: number;
+        cached_input_tokens: number;
+        output_tokens: number;
+    };
+}
+
+const models = [
+    {
+        id: 'gpt-4o',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 2.50,
+            cached_input_tokens: 1.25,
+            output_tokens: 10.00
+        }
+    },
+    {
+        id: 'gpt-4o-mini',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.15,
+            cached_input_tokens: 0.075,
+            output_tokens: 0.60
+        }
+    },
+    {
+        id: 'gpt-4-turbo',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.03,
+            cached_input_tokens: 0.015,
+            output_tokens: 0.06
+        }
+    },
+    {
+        id: 'gpt-3.5-turbo',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.015,
+            cached_input_tokens: 0.0075,
+            output_tokens: 0.020
+        }
+    },
+    {
+        id: 'dall-e-3',
+        modelType: [LlmModelType.IMAGE],
+        tokenDivisor: 1,
+        pricing: {
+            standard: {
+                '1024x1024': 0.040,
+                '1024x1792': 0.080,
+                '1792x1024': 0.080,
+                '256x256': null,
+                '512x512': null
+            },
+            hd: {
+                '1024x1024': 0.080,
+                '1024x1792': 0.120,
+                '1792x1024': 0.120,
+                '256x256': null,
+                '512x512': null
             }
         }
-    ],
-    image: [
-        {
-            id: 'dall-e-3',
-            pricing: {
-                'standard': {
-                    '1024x1024': 0.040,
-                    '1024x1792': 0.080,
-                    '1792x1024': 0.080,
-                    '256x256': null,
-                    '512x512': null
-                },
-                'hd': {
-                    '1024x1024': 0.080,
-                    '1024x1792': 0.120,
-                    '1792x1024': 0.120,
-                    '256x256': null,
-                    '512x512': null
-                }
-            }
-        },
-        {
-            id: 'dall-e-2',
-            pricing: {
-                '256x256': 0.016,
-                '512x512': 0.018,
-                '1024x1024': 0.020,
-                '1024x1792': null,
-                '1792x1024': null
-            }
+    },
+    {
+        id: 'dall-e-2',
+        modelType: [LlmModelType.IMAGE],
+        tokenDivisor: 1,
+        pricing: {
+            '256x256': 0.016,
+            '512x512': 0.018,
+            '1024x1024': 0.020,
+            '1024x1792': null,
+            '1792x1024': null
         }
-    ]
-};
+    }
+];

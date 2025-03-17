@@ -2,7 +2,7 @@ export * from './domains/LlmDomain.js';
 export * from './protocol.js';
 export * from './schema/llm/LlmCompleteResponse.js';
 export * from './schema/llm/LlmGenerateImage.js';
-export * from './schema/llm/LlmGenerateStructureData.js';
+export * from './schema/llm/LlmGenerateStructuredData.js';
 export * from './schema/llm/LlmGenerateText.js';
 export * from './schema/llm/LlmImageModelParams.js';
 export * from './schema/llm/LlmModelType.js';
