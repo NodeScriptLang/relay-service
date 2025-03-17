@@ -1,4 +1,5 @@
 import { LlmCompleteRequest, LlmCompleteResponse, LlmDomain, LlmModelType } from '@nodescript/relay-protocol';
+import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
 import { AnthropicLlmService } from '../services/llm/AnthropicLlmService.js';
@@ -15,6 +16,8 @@ export class LlmDomainImpl implements LlmDomain {
     @dep() private deepseekLlmService!: DeepseekLlmService;
     @dep() private geminiLlmService!: GeminiLlmService;
     @dep() private openaAiLlmService!: OpenaAiLlmService;
+
+    @config() LLM_PRICE_PER_CREDIT!: number;
 
     private llmServices: Record<string, LlmService> = {};
 
@@ -70,8 +73,9 @@ export class LlmDomainImpl implements LlmDomain {
     }
 
     private calculateMillicredits(cost: number): number {
-        // TODO actual cost conversion
-        return Math.ceil(cost * 1000);
+        const multiplier = Math.pow(10, -2);
+        const millicredits = cost / this.LLM_PRICE_PER_CREDIT / 1000;
+        return Math.ceil(millicredits * multiplier) / multiplier;
     }
 
     private getAllModels(): Record<string, string> {
