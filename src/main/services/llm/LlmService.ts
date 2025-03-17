@@ -1,9 +1,16 @@
-import { LlmCompleteRequest, LlmCompleteResponse } from '@nodescript/relay-protocol';
+import { LlmCompleteRequest, LlmCompleteResponse, LlmGenerateImage, LlmGenerateStructureData, LlmGenerateText } from '@nodescript/relay-protocol';
 
 export abstract class LlmService {
 
     abstract getModels(): Record<string, any>;
+
+    // TODO refactor
     abstract complete(request: LlmCompleteRequest): Promise<LlmCompleteResponse>;
+
+    abstract generateText(request: LlmGenerateText): Promise<LlmCompleteResponse>;
+    abstract generateImage(request: LlmGenerateImage): Promise<LlmCompleteResponse>;
+    abstract generateStructureData(request: LlmGenerateStructureData): Promise<LlmCompleteResponse>;
+
     abstract calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number;
 
     protected abstract getRequestUrl(modelType: string, model?: string): string;

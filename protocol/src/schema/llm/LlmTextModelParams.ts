@@ -1,9 +1,6 @@
 import { Schema } from 'airtight';
 
 export interface LlmTextModelParams {
-    model: string;
-    userPrompt: string;
-    systemPrompt: string;
     data?: any;
     maxTokens?: number;
     temperature?: number;
@@ -22,9 +19,6 @@ export interface LlmTextModelParams {
 export const LlmTextModelParamsSchema = new Schema<LlmTextModelParams>({
     type: 'object',
     properties: {
-        model: { type: 'string' },
-        userPrompt: { type: 'string' },
-        systemPrompt: { type: 'string' },
         data: {
             type: 'any',
             optional: true,
