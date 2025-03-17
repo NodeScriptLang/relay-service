@@ -5,7 +5,7 @@ import { LlmService } from './LlmService.js';
 
 export class GeminiLlmService extends LlmService {
 
-    @config({ default: 'https://generativelanguage.googleapis.com/v1beta' }) GEMINI_BASE_URL!: string;
+    @config({ default: 'https://generativelanguage.googleapis.com/v1beta/' }) GEMINI_BASE_URL!: string;
     @config({ default: 1_000_000 }) GEMINI_PRICE_PER_TOKENS!: number;
 
     @config() LLM_GEMINI_API_KEY!: string;
@@ -16,7 +16,7 @@ export class GeminiLlmService extends LlmService {
 
     async generateText(req: LlmGenerateText): Promise<LlmCompleteResponse> {
         const body = this.formatTextRequestBody(req);
-        const res = await this.request('chat/completions', req.model, 'POST', body);
+        const res = await this.request('generateContent', req.model, 'POST', body);
         const json = await res.json();
         return {
             content: json.candidates[0].content.parts[0].text,
@@ -28,7 +28,7 @@ export class GeminiLlmService extends LlmService {
 
     async generateStructuredData(req: LlmGenerateText): Promise<LlmCompleteResponse> {
         const body = this.formatTextRequestBody(req);
-        const res = await this.request('chat/completions', req.model, 'POST', body);
+        const res = await this.request('generateContent', req.model, 'POST', body);
         const json = await res.json();
         return {
             content: json.candidates[0].content.parts[0].text,
@@ -40,10 +40,16 @@ export class GeminiLlmService extends LlmService {
 
     async generateImage(req: LlmGenerateImage): Promise<LlmCompleteResponse> {
         const body = this.formatImageRequestBody(req);
-        const res = await this.request('images/generations', req.model, 'POST', body);
+        const res = await this.request('generateContent', req.model, 'POST', body);
         const json = await res.json();
+
+        const candidate = json.candidates[0];
+        const content = candidate.content;
+        const imagePart = content.parts.find((part: any) => part.inlineData);
+        const imageData = imagePart ? imagePart.inlineData.data : null;
+
         return {
-            content: json.data[0].url,
+            content: imageData,
             fullResponse: json,
             status: res.status,
         };
@@ -84,7 +90,7 @@ export class GeminiLlmService extends LlmService {
     // Helpers
 
     private async request(path: string, model: string, method: string, body: Record<string, any>): Promise<Response> {
-        const url = new URL(`${this.GEMINI_BASE_URL}/models/${model}:${path}`);
+        const url = new URL(`${this.GEMINI_BASE_URL}models/${model}:${path}`);
         url.searchParams.append('key', this.LLM_GEMINI_API_KEY);
         const res = await fetch(url, {
             method,
@@ -113,14 +119,22 @@ export class GeminiLlmService extends LlmService {
                     role: 'user',
                     parts: [
                         {
-                            text: req.system
+                            text: `System prompt: ${req.system}`
                         },
+                    ]
+                },
+                {
+                    role: 'user',
+                    parts: [
                         {
                             text: req.prompt
                         },
-                        (data ?? {
-                            text: data
-                        })
+                        ...(data ?
+                            [{
+                                role: 'user',
+                                content: data
+                            }] :
+                            [])
                     ]
                 },
             ],
@@ -137,10 +151,26 @@ export class GeminiLlmService extends LlmService {
 
     private formatImageRequestBody(req: LlmGenerateImage): Record<string, any> {
         return {
-            'model': req.model,
-            'prompt': req.prompt,
+            'contents': [
+                {
+                    role: 'user',
+                    parts: [
+                        {
+                            text: `System prompt: ${req.system}`
+                        },
+                    ]
+                },
+                {
+                    role: 'user',
+                    parts: [
+                        {
+                            text: req.prompt
+                        }
+                    ]
+                }
+            ],
             'generationConfig': {
-                'responseModalities': ['Text']
+                'responseModalities': ['Text', 'Image']
             }
         };
     }
@@ -235,6 +265,50 @@ const models = {
         },
         {
             id: 'gemini-1.5-flash-001',
+            pricing: {
+                'promptTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 0.075
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 0.15
+                        }
+                    ]
+                },
+                'candidatesTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 0.30
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 0.60
+                        }
+                    ]
+                },
+                'contextCachingTokenCount': {
+                    'tiered_pricing': [
+                        {
+                            'max_tokens': 128000,
+                            'price': 0.01875
+                        },
+                        {
+                            'min_tokens': 128001,
+                            'price': 0.0375
+                        }
+                    ]
+                },
+                'contextCachingStorage': 1.00
+            }
+        }
+    ],
+    image: [
+        {
+            id: 'gemini-2.0-flash-exp-image-generation',
             pricing: {
                 'promptTokenCount': {
                     'tiered_pricing': [

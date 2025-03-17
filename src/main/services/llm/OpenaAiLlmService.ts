@@ -133,10 +133,12 @@ export class OpenaAiLlmService extends LlmService {
                     role: 'user',
                     content: req.prompt,
                 },
-                (data ?? {
-                    role: 'user',
-                    content: data
-                })
+                ...(data ?
+                    [{
+                        role: 'user',
+                        content: data
+                    }] :
+                    [])
             ],
             'max_tokens': req.params?.maxTokens,
             'temperature': req.params?.temperature,

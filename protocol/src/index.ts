@@ -1,6 +1,5 @@
 export * from './domains/LlmDomain.js';
 export * from './protocol.js';
-export * from './schema/llm/LlmCompleteRequest.js';
 export * from './schema/llm/LlmCompleteResponse.js';
 export * from './schema/llm/LlmGenerateImage.js';
 export * from './schema/llm/LlmGenerateStructureData.js';

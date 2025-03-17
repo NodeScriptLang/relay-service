@@ -5,7 +5,7 @@ import { LlmService } from './LlmService.js';
 
 export class AnthropicLlmService extends LlmService {
 
-    @config({ default: 'https://api.anthropic.com/v1' }) ANTHROPIC_BASE_URL!: string;
+    @config({ default: 'https://api.anthropic.com/v1/' }) ANTHROPIC_BASE_URL!: string;
     @config({ default: 1_000_000 }) ANTHROPIC_PRICE_PER_TOKENS!: number;
 
     @config() LLM_ANTHROPIC_API_KEY!: string;
@@ -49,41 +49,6 @@ export class AnthropicLlmService extends LlmService {
         };
     }
 
-    // Helpers
-
-    private async request(path: string, method: string, body: Record<string, any>): Promise<Response> {
-        const res = await fetch(`${this.ANTHROPIC_BASE_URL}${path}`, {
-            method,
-            headers: {
-                'X-Api-Key': this.LLM_ANTHROPIC_API_KEY,
-                'Content-Type': 'application/json',
-                'Anthropic-Version': '2023-06-01',
-                'Anthropic-Dangerous-Direct-Browser-Access': 'true'
-            },
-            body: body ? JSON.stringify(body) : undefined
-        });
-        if (!res.ok) {
-            const errorText = await res.text();
-            const error = new Error(`Anthropic API error: ${res.status} ${errorText}`);
-            (error as any).status = res.status;
-            throw error;
-        }
-        return res;
-    }
-
-    protected getResponse(modelType: string, json: Record<string, any>, status: number): LlmCompleteResponse {
-        if (modelType === LlmModelType.TEXT) {
-            return {
-                content: json.content[0].text,
-                totalTokens: json.usage.input_tokens + json.usage.output_tokens,
-                fullResponse: json,
-                status,
-            };
-        } else {
-            throw new Error(`Unsupported model type: ${modelType}`);
-        }
-    }
-
     calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
         if (modelType === LlmModelType.TEXT) {
             const model = models.text.find(m => m.id === params.model);
@@ -108,6 +73,28 @@ export class AnthropicLlmService extends LlmService {
         return 0;
     }
 
+    // Helpers
+
+    private async request(path: string, method: string, body: Record<string, any>): Promise<Response> {
+        const res = await fetch(`${this.ANTHROPIC_BASE_URL}${path}`, {
+            method,
+            headers: {
+                'X-Api-Key': this.LLM_ANTHROPIC_API_KEY,
+                'Content-Type': 'application/json',
+                'Anthropic-Version': '2023-06-01',
+                'Anthropic-Dangerous-Direct-Browser-Access': 'true'
+            },
+            body: body ? JSON.stringify(body) : undefined
+        });
+        if (!res.ok) {
+            const errorText = await res.text();
+            const error = new Error(`Anthropic API error: ${res.status} ${errorText}`);
+            (error as any).status = res.status;
+            throw error;
+        }
+        return res;
+    }
+
     private formatTextRequestBody(req: LlmGenerateText | LlmGenerateStructureData): Record<string, any> {
         let data = undefined;
         if ('data' in req) {
@@ -120,10 +107,12 @@ export class AnthropicLlmService extends LlmService {
                     role: 'user',
                     content: `${req.prompt}`
                 },
-                (data ?? {
-                    role: 'user',
-                    content: data
-                })
+                ...(data ?
+                    [{
+                        role: 'user',
+                        content: data
+                    }] :
+                    [])
             ],
             'max_tokens': req.params?.maxTokens,
             'temperature': req.params?.temperature,

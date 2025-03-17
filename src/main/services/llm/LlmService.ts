@@ -5,8 +5,8 @@ export abstract class LlmService {
     abstract getModels(): Record<string, any>;
 
     abstract generateText(request: LlmGenerateText): Promise<LlmCompleteResponse>;
-    abstract generateImage(request: LlmGenerateImage): Promise<LlmCompleteResponse>;
     abstract generateStructuredData(request: LlmGenerateStructureData): Promise<LlmCompleteResponse>;
+    abstract generateImage(request: LlmGenerateImage): Promise<LlmCompleteResponse>;
 
     abstract calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number;
 

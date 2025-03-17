@@ -5,36 +5,12 @@ import { LlmService } from './LlmService.js';
 
 export class DeepseekLlmService extends LlmService {
 
-    @config({ default: 'https://api.deepseek.com/v1' }) DEEPSEEK_BASE_URL!: string;
+    @config({ default: 'https://api.deepseek.com/v1/' }) DEEPSEEK_BASE_URL!: string;
     @config({ default: 1_000_000 }) DEEPSEEK_PRICE_PER_TOKENS!: number;
     @config() LLM_DEEPSEEK_API_KEY!: string;
 
     getModels() {
         return models;
-    }
-
-    calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
-        if (modelType === LlmModelType.TEXT) {
-            const model = models.text.find(m => m.id === params.model);
-            if (!model) {
-                throw new Error(`Unsupported model: ${params.model}`);
-            }
-
-            const pricingTier = 'standard'; // Default to standard pricing for simplicity
-            const pricing = model.pricing[pricingTier];
-
-            const promptCacheHitTokens = json.prompt_cache_hit_tokens || json.usage?.prompt_tokens_details?.cached_tokens || 0;
-            const promptCacheMissTokens = json.prompt_cache_miss_tokens ||
-                (json.usage?.prompt_tokens - (json.usage?.prompt_tokens_details?.cached_tokens || 0));
-            const completionTokens = json.usage?.completion_tokens || 0;
-
-            const cacheHitCost = promptCacheHitTokens * (pricing.prompt_cache_hit_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
-            const cacheMissCost = promptCacheMissTokens * (pricing.prompt_cache_miss_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
-            const completionCost = completionTokens * (pricing.completion_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
-
-            return cacheHitCost + cacheMissCost + completionCost;
-        }
-        return 0;
     }
 
     async generateText(req: LlmGenerateText): Promise<LlmCompleteResponse> {
@@ -61,15 +37,39 @@ export class DeepseekLlmService extends LlmService {
         };
     }
 
-    async generateImage(req: LlmGenerateImage): Promise<LlmCompleteResponse> {
-        const body = this.formatImageRequestBody(req);
-        const res = await this.request('images/generations', 'POST', body);
-        const json = await res.json();
+    async generateImage(_req: LlmGenerateImage): Promise<LlmCompleteResponse> {
         return {
-            content: json.data[0].url,
-            fullResponse: json,
-            status: res.status,
+            content: 'Image generation is not supported by DeepSeek models. Please select a different model.',
+            fullResponse: {
+                error: 'Image generation not supported',
+                suggestion: 'Use models like OpenAI\'s DALL-E for image generation tasks.'
+            },
+            status: 400,
         };
+    }
+
+    calculateCost(modelType: string, params: Record<string, any>, json: Record<string, any>): number {
+        if (modelType === LlmModelType.TEXT) {
+            const model = models.text.find(m => m.id === params.model);
+            if (!model) {
+                throw new Error(`Unsupported model: ${params.model}`);
+            }
+
+            const pricingTier = 'standard'; // Default to standard pricing for simplicity
+            const pricing = model.pricing[pricingTier];
+
+            const promptCacheHitTokens = json.prompt_cache_hit_tokens || json.usage?.prompt_tokens_details?.cached_tokens || 0;
+            const promptCacheMissTokens = json.prompt_cache_miss_tokens ||
+                (json.usage?.prompt_tokens - (json.usage?.prompt_tokens_details?.cached_tokens || 0));
+            const completionTokens = json.usage?.completion_tokens || 0;
+
+            const cacheHitCost = promptCacheHitTokens * (pricing.prompt_cache_hit_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
+            const cacheMissCost = promptCacheMissTokens * (pricing.prompt_cache_miss_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
+            const completionCost = completionTokens * (pricing.completion_tokens / this.DEEPSEEK_PRICE_PER_TOKENS);
+
+            return cacheHitCost + cacheMissCost + completionCost;
+        }
+        return 0;
     }
 
     // Helpers
@@ -108,10 +108,12 @@ export class DeepseekLlmService extends LlmService {
                     role: 'user',
                     content: req.prompt
                 },
-                (data ?? {
-                    role: 'user',
-                    conten: data
-                })
+                ...(data ?
+                    [{
+                        role: 'user',
+                        content: data
+                    }] :
+                    [])
             ],
             'max_tokens': req.params?.maxTokens,
             'temperature': req.params?.temperature,
