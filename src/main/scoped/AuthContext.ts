@@ -1,4 +1,4 @@
-import { AccountInfo, AuthToken, Permission } from '@nodescript/api-proto';
+import { AuthToken, Permission, PrincipalInfo } from '@nodescript/api-proto';
 import { AccessDeniedError, AuthenticationRequiredError } from '@nodescript/errors';
 
 // TODO (bo) this is duplicated in nodescript-platform
@@ -40,7 +40,7 @@ export class AuthContext {
         return this.authToken?.principal;
     }
 
-    requirePrincipal(): AccountInfo {
+    requirePrincipal(): PrincipalInfo {
         return this.requireAuth().principal;
     }
 
