@@ -1,9 +1,6 @@
 import { Schema } from 'airtight';
 
 export interface LlmImageModelParams {
-    model: string;
-    userPrompt: string;
-    systemPrompt: string;
     n?: number;
     size?: string;
     responseFormat?: string;
@@ -15,9 +12,6 @@ export interface LlmImageModelParams {
 export const LlmImageModelParamsSchema = new Schema<LlmImageModelParams>({
     type: 'object',
     properties: {
-        model: { type: 'string' },
-        userPrompt: { type: 'string' },
-        systemPrompt: { type: 'string' },
         n: {
             type: 'number',
             optional: true,
