@@ -175,6 +175,7 @@ interface TextModel {
     };
 }
 
+// For more details on pricing, see: https://platform.openai.com/docs/pricing
 const models = [
     {
         id: 'gpt-4o',

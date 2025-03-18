@@ -122,6 +122,7 @@ export class AnthropicLlmService extends LlmService {
 
 }
 
+// For more details on pricing, see: https://www.anthropic.com/pricing#anthropic-api
 const models = [
     {
         id: 'claude-3-7-sonnet-20250219',

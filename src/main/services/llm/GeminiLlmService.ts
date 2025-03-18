@@ -169,6 +169,7 @@ export class GeminiLlmService extends LlmService {
 
 }
 
+// For more details on pricing, see: https://ai.google.dev/gemini-api/docs/pricing
 const models = [
     {
         id: 'gemini-2.0-pro-exp-02-05',
