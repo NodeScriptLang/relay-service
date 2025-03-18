@@ -7,8 +7,8 @@ import { DeepseekLlmService } from '../services/llm/DeepseekLlmService.js';
 import { GeminiLlmService } from '../services/llm/GeminiLlmService.js';
 import { LlmService } from '../services/llm/LlmService.js';
 import { OpenaAiLlmService } from '../services/llm/OpenaAiLlmService.js';
+import { calculateMillicredits } from '../utils/cost.js';
 import { NodeScriptApi } from './NodeScriptApi.js';
-
 export class LlmDomainImpl implements LlmDomain {
 
     @dep() private nsApi!: NodeScriptApi;
@@ -55,7 +55,7 @@ export class LlmDomainImpl implements LlmDomain {
             const response = await service.generateText(req.request);
 
             const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
-            const millicredits = this.calculateMillicredits(cost);
+            const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
             const skuId = `llm:${providerId}:generateText:${model}`;
             const skuName = `${providerId}:generateText`;
             this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
@@ -83,7 +83,7 @@ export class LlmDomainImpl implements LlmDomain {
             const response = await service.generateStructuredData(req.request);
 
             const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
-            const millicredits = this.calculateMillicredits(cost);
+            const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
             const skuId = `llm:${providerId}:generateStructuredData:${model}`;
             const skuName = `${providerId}:generateStructuredData`;
             this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
@@ -110,7 +110,7 @@ export class LlmDomainImpl implements LlmDomain {
         try {
             const response = await service.generateImage(req.request);
             const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
-            const millicredits = this.calculateMillicredits(cost);
+            const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
             const skuId = `llm:${providerId}:generateImage:${model}`;
             const skuName = `${providerId}:generateImage`;
             this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
@@ -120,12 +120,6 @@ export class LlmDomainImpl implements LlmDomain {
             const err = service.handleError(error);
             throw err;
         }
-    }
-
-    private calculateMillicredits(cost: number): number {
-        const multiplier = Math.pow(10, -2);
-        const millicredits = cost / this.LLM_PRICE_PER_CREDIT / 1000;
-        return Math.ceil(millicredits * multiplier) / multiplier;
     }
 
     private getProviderForModel(modelId: string): string | undefined {

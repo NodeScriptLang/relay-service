@@ -1,3 +1,5 @@
-describe('Relay Service Tests', () => {
-    // TODO: Add tests
-});
+import { runtime } from './runtime.js';
+
+beforeEach(() => runtime.setup());
+
+afterEach(() => runtime.teardown());
