@@ -14,6 +14,14 @@ export class NodeScriptApi {
     @dep() private ctx!: HttpContext;
     @dep() private authContext!: AuthContext;
 
+    async getWorkspaceId(): Promise<string> {
+        const token = this.authContext.requireAuth();
+        if (!token.workspaceId) {
+            throw new Error('Invalid token');
+        }
+        return token.workspaceId;
+    }
+
     async getWorkspace(workspaceId: string): Promise<Workspace> {
         const client = this.createClient();
         const { workspace } = await client.Workspace.getWorkspaceById({ id: workspaceId });
