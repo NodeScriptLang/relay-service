@@ -1,23 +1,32 @@
+import { RateLimitExceededError } from '@nodescript/errors';
 import { LlmCompleteResponse, LlmDomain, LlmGenerateImage, LlmGenerateStructuredData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
+import { RedisManager } from '../global/RedisManager.js';
 import { AnthropicLlmService } from '../services/llm/AnthropicLlmService.js';
 import { DeepseekLlmService } from '../services/llm/DeepseekLlmService.js';
 import { GeminiLlmService } from '../services/llm/GeminiLlmService.js';
 import { LlmService } from '../services/llm/LlmService.js';
 import { OpenaAiLlmService } from '../services/llm/OpenaAiLlmService.js';
 import { calculateMillicredits } from '../utils/cost.js';
+import { getDate, getHour, HOUR_SECONDS } from '../utils/date.js';
 import { NodeScriptApi } from './NodeScriptApi.js';
+
 export class LlmDomainImpl implements LlmDomain {
 
+    @config() LLM_PRICE_PER_CREDIT!: number;
+
+    @config({ default: 120 }) LLM_RATE_LIMIT!: number;
+    @config({ default: HOUR_SECONDS }) LLM_RATE_LIMIT_TTL_SECONDS!: number;
+
     @dep() private nsApi!: NodeScriptApi;
+    @dep() private redis!: RedisManager;
+
     @dep() private anthropicLlmService!: AnthropicLlmService;
     @dep() private deepseekLlmService!: DeepseekLlmService;
     @dep() private geminiLlmService!: GeminiLlmService;
     @dep() private openaAiLlmService!: OpenaAiLlmService;
-
-    @config() LLM_PRICE_PER_CREDIT!: number;
 
     private llmServices: Record<string, LlmService> = {};
 
@@ -52,13 +61,16 @@ export class LlmDomainImpl implements LlmDomain {
         }
 
         try {
+            const workspaceId = await this.nsApi.getWorkspaceId();
+            await this.handleRateLimit(workspaceId);
+
             const response = await service.generateText(req.request);
 
             const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
             const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
             const skuId = `llm:${providerId}:generateText:${model}`;
             const skuName = `${providerId}:generateText`;
-            this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+            await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
 
             return { response };
         } catch (error) {
@@ -80,13 +92,16 @@ export class LlmDomainImpl implements LlmDomain {
         }
 
         try {
+            const workspaceId = await this.nsApi.getWorkspaceId();
+            await this.handleRateLimit(workspaceId);
+
             const response = await service.generateStructuredData(req.request);
 
             const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
             const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
             const skuId = `llm:${providerId}:generateStructuredData:${model}`;
             const skuName = `${providerId}:generateStructuredData`;
-            this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+            await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
 
             return { response };
         } catch (error) {
@@ -108,12 +123,16 @@ export class LlmDomainImpl implements LlmDomain {
         }
 
         try {
+            const workspaceId = await this.nsApi.getWorkspaceId();
+            await this.handleRateLimit(workspaceId);
+
             const response = await service.generateImage(req.request);
+
             const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
             const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
             const skuId = `llm:${providerId}:generateImage:${model}`;
             const skuName = `${providerId}:generateImage`;
-            this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+            await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
 
             return { response };
         } catch (error) {
@@ -138,6 +157,19 @@ export class LlmDomainImpl implements LlmDomain {
             }
         }
         return modelToProvider;
+    }
+
+    private async handleRateLimit(workspaceId: string) {
+        const date = getDate();
+        const hour = getHour();
+        const key = `Relay:llm:rateLimit:${workspaceId}:${date}:${hour}`;
+        const currentCount = await this.redis.client.incr(key);
+        if (currentCount === 1) {
+            await this.redis.client.expire(key, this.LLM_RATE_LIMIT_TTL_SECONDS);
+        }
+        if (currentCount > this.LLM_RATE_LIMIT) {
+            throw new RateLimitExceededError();
+        }
     }
 
 }
