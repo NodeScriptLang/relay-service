@@ -70,7 +70,7 @@ export class LlmDomainImpl implements LlmDomain {
             const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
             const skuId = `llm:${providerId}:generateText:${model}`;
             const skuName = `${providerId}:generateText`;
-            this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+            await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
 
             return { response };
         } catch (error) {
@@ -132,7 +132,7 @@ export class LlmDomainImpl implements LlmDomain {
             const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
             const skuId = `llm:${providerId}:generateImage:${model}`;
             const skuName = `${providerId}:generateImage`;
-            this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+            await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
 
             return { response };
         } catch (error) {
