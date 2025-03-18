@@ -11,29 +11,16 @@ LOG_PRETTY=true
 NODESCRIPT_API_URL=http://localhost:32001
 HTTP_PORT=3000
 AUX_HTTP_PORT=3001
-CONFIG='{
-    "<module title lowercase>": {
-        "id": "<module title lowercase>",
-        "title": "<module title uppercase>",
-        "baseUrl": "<base api url>",
-        "authSchema": "header",
-        "key": "<key>"
-    }
-}'
+LLM_OPENAI_API_KEY=<key>
+LLM_ANTHROPIC_API_KEY=<key>
+LLM_GEMINI_API_KEY=<key>
+LLM_DEEPSEEK_API_KEY=<key>
+LLM_PRICE_PER_CREDIT=<price>
+JWT_PUBLIC_KEY=<key>
 ```
 
-Example config:
-```
-CONFIG='{
-    "openai": {
-        "id": "openai",
-        "title": "OpenAI",
-        "baseUrl": "https://api.openai.com/",
-        "authSchema": "header",
-        "key": "your-api-key"
-    }
-}'
-```
+Replace the LLM Service Providers API Keys with your own.
+JWT_PUBLIC_KEY is the public key for the JWT token. You can get this by accessing `relay-secrets.yaml` in the `infrastructure` repo.
 
 ### Production:
 
