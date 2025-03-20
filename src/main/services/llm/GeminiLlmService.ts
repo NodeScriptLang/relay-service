@@ -62,17 +62,9 @@ export class GeminiLlmService extends LlmService {
         const candidatesTokenCount = json.usageMetadata?.candidatesTokenCount || 0;
         const contextCachingTokenCount = json.usageMetadata?.contextCachingTokenCount || 0;
 
-        const promptPrice = promptTokenCount <= 128000 ?
-            model.pricing.promptTokenCount.tiered_pricing[0].price :
-            model.pricing.promptTokenCount.tiered_pricing[1].price;
-
-        const candidatesPrice = candidatesTokenCount <= 128000 ?
-            model.pricing.candidatesTokenCount.tiered_pricing[0].price :
-            model.pricing.candidatesTokenCount.tiered_pricing[1].price;
-
-        const cachingPrice = contextCachingTokenCount <= 128000 ?
-            model.pricing.contextCachingTokenCount.tiered_pricing[0].price :
-            model.pricing.contextCachingTokenCount.tiered_pricing[1].price;
+        const promptPrice = this.getPrice(model.pricing.promptTokenCount, promptTokenCount);
+        const candidatesPrice = this.getPrice(model.pricing.candidatesTokenCount, candidatesTokenCount);
+        const cachingPrice = this.getPrice(model.pricing.contextCachingTokenCount, contextCachingTokenCount);
 
         const promptCost = (promptTokenCount * promptPrice) / model.tokenDivisor;
         const candidatesCost = (candidatesTokenCount * candidatesPrice) / model.tokenDivisor;
@@ -100,6 +92,19 @@ export class GeminiLlmService extends LlmService {
             throw error;
         }
         return res;
+    }
+
+    private getPrice(pricingObj: any, tokenCount: number): number {
+        if (pricingObj.price !== undefined) {
+            // Flat pricing
+            return pricingObj.price;
+        } else if (pricingObj.tiered_pricing) {
+            // Tiered pricing
+            return tokenCount <= 128000 ?
+                pricingObj.tiered_pricing[0].price :
+                pricingObj.tiered_pricing[1].price;
+        }
+        return 0;
     }
 
     private formatTextRequestBody(req: LlmGenerateText | LlmGenerateStructuredData): Record<string, any> {
@@ -304,45 +309,35 @@ const models = [
         }
     },
     {
-        id: 'gemini-2.0-flash-exp-image-generation',
+        id: 'gemini-2.0-flash-001',
         tokenDivisor: 1_000_000,
-        modelType: [LlmModelType.TEXT, LlmModelType.IMAGE],
+        modelType: [LlmModelType.TEXT],
         pricing: {
             promptTokenCount: {
-                tiered_pricing: [
-                    {
-                        max_tokens: 128000,
-                        price: 0.075
-                    },
-                    {
-                        min_tokens: 128001,
-                        price: 0.15
-                    }
-                ]
+                price: 0.10
             },
             candidatesTokenCount: {
-                tiered_pricing: [
-                    {
-                        max_tokens: 128000,
-                        price: 0.30
-                    },
-                    {
-                        min_tokens: 128001,
-                        price: 0.60
-                    }
-                ]
+                price: 0.40
             },
             contextCachingTokenCount: {
-                tiered_pricing: [
-                    {
-                        max_tokens: 128000,
-                        price: 0.01875
-                    },
-                    {
-                        min_tokens: 128001,
-                        price: 0.0375
-                    }
-                ]
+                price: 0.025
+            },
+            contextCachingStorage: 1.00
+        }
+    },
+    {
+        id: 'gemini-2.0-flash-exp-image-generation',
+        tokenDivisor: 1_000_000,
+        modelType: [LlmModelType.IMAGE],
+        pricing: {
+            promptTokenCount: {
+                price: 0.10
+            },
+            candidatesTokenCount: {
+                price: 0.40
+            },
+            contextCachingTokenCount: {
+                price: 0.025
             },
             contextCachingStorage: 1.00
         }
