@@ -7,6 +7,7 @@ import { RedisManager } from '../global/RedisManager.js';
 import { AnthropicLlmService } from '../services/llm/AnthropicLlmService.js';
 import { DeepseekLlmService } from '../services/llm/DeepseekLlmService.js';
 import { GeminiLlmService } from '../services/llm/GeminiLlmService.js';
+import { GroqLlmService } from '../services/llm/GroqLlmService.js';
 import { LlmService } from '../services/llm/LlmService.js';
 import { OpenaAiLlmService } from '../services/llm/OpenaAiLlmService.js';
 import { calculateMillicredits } from '../utils/cost.js';
@@ -26,6 +27,7 @@ export class LlmDomainImpl implements LlmDomain {
     @dep() private anthropicLlmService!: AnthropicLlmService;
     @dep() private deepseekLlmService!: DeepseekLlmService;
     @dep() private geminiLlmService!: GeminiLlmService;
+    @dep() private groqLlmService!: GroqLlmService;
     @dep() private openaAiLlmService!: OpenaAiLlmService;
 
     private llmServices: Record<string, LlmService> = {};
@@ -35,6 +37,7 @@ export class LlmDomainImpl implements LlmDomain {
             'anthropic': this.anthropicLlmService,
             'deepseek': this.deepseekLlmService,
             'gemini': this.geminiLlmService,
+            'groq': this.groqLlmService,
             'openai': this.openaAiLlmService
         };
     }

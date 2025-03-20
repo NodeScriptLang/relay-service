@@ -10,6 +10,7 @@ import { RelayProtocolImpl } from './scoped/RelayProtocolImpl.js';
 import { AnthropicLlmService } from './services/llm/AnthropicLlmService.js';
 import { DeepseekLlmService } from './services/llm/DeepseekLlmService.js';
 import { GeminiLlmService } from './services/llm/GeminiLlmService.js';
+import { GroqLlmService } from './services/llm/GroqLlmService.js';
 import { OpenaAiLlmService } from './services/llm/OpenaAiLlmService.js';
 
 export class HttpScope extends Mesh {
@@ -24,10 +25,11 @@ export class HttpScope extends Mesh {
         this.service(MainHttpHandler);
         this.service(NodeScriptApi);
         // LLM Services
-        this.service(OpenaAiLlmService);
         this.service(AnthropicLlmService);
-        this.service(GeminiLlmService);
         this.service(DeepseekLlmService);
+        this.service(GeminiLlmService);
+        this.service(GroqLlmService);
+        this.service(OpenaAiLlmService);
     }
 
 }
