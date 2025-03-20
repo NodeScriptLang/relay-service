@@ -12,6 +12,7 @@ import { DeepseekLlmService } from './services/llm/DeepseekLlmService.js';
 import { GeminiLlmService } from './services/llm/GeminiLlmService.js';
 import { GroqLlmService } from './services/llm/GroqLlmService.js';
 import { OpenaAiLlmService } from './services/llm/OpenaAiLlmService.js';
+import { XAiLlmService } from './services/llm/XAiLlmService.js';
 
 export class HttpScope extends Mesh {
 
@@ -30,6 +31,7 @@ export class HttpScope extends Mesh {
         this.service(GeminiLlmService);
         this.service(GroqLlmService);
         this.service(OpenaAiLlmService);
+        this.service(XAiLlmService);
     }
 
 }
