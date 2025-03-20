@@ -14,6 +14,13 @@ export interface LlmTextModelParams {
     candidateCount?: number;
     seed?: number;
     stream?: boolean;
+
+    // Perplexity-specific parameters
+    web_search?: boolean;
+    search_context_size?: number;
+    search_domain_filter?: string;
+    search_recency_filter?: string;
+    return_related_questions?: boolean;
 }
 
 export const LlmTextModelParamsSchema = new Schema<LlmTextModelParams>({
@@ -72,6 +79,27 @@ export const LlmTextModelParamsSchema = new Schema<LlmTextModelParams>({
         },
         seed: { type: 'number', optional: true },
         stream: {
+            type: 'boolean',
+            optional: true,
+        },
+        // Perplexity-specific parameters
+        web_search: {
+            type: 'boolean',
+            optional: true,
+        },
+        search_context_size: {
+            type: 'number',
+            optional: true,
+        },
+        search_domain_filter: {
+            type: 'string',
+            optional: true,
+        },
+        search_recency_filter: {
+            type: 'string',
+            optional: true,
+        },
+        return_related_questions: {
             type: 'boolean',
             optional: true,
         },
