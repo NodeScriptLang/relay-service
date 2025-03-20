@@ -155,6 +155,96 @@ const models = [
         }
     },
     {
+        id: 'gemma2-9b-it',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.20,
+            output_tokens: 0.20
+        }
+    },
+    {
+        id: 'llama-3.1-8b-instant',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.05,
+            output_tokens: 0.08
+        }
+    },
+    {
+        id: 'llama-3.2-1b-preview',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.04,
+            output_tokens: 0.04
+        }
+    },
+    {
+        id: 'llama-3.2-3b-preview',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.06,
+            output_tokens: 0.06
+        }
+    },
+    {
+        id: 'llama-3.3-70b-specdec',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.59,
+            output_tokens: 0.99
+        }
+    },
+    {
+        id: 'llama-3.3-70b-versatile',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.59,
+            output_tokens: 0.79
+        }
+    },
+    {
+        id: 'llama3-70b-8192',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.59,
+            output_tokens: 0.79
+        }
+    },
+    {
+        id: 'llama3-8b-8192',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.05,
+            output_tokens: 0.08
+        }
+    },
+    {
+        id: 'mistral-saba-24b',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.79,
+            output_tokens: 0.79
+        }
+    },
+    {
+        id: 'mixtral-8x7b-32768',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.24,
+            output_tokens: 0.24
+        }
+    },
+    {
         id: 'qwen-2.5-32b',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
@@ -179,96 +269,6 @@ const models = [
         pricing: {
             input_tokens: 0.29,
             output_tokens: 0.39
-        }
-    },
-    {
-        id: 'mistral-saba-24b',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.79,
-            output_tokens: 0.79
-        }
-    },
-    {
-        id: 'llama-3.2-1b-preview',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.04,
-            output_tokens: 0.04
-        }
-    },
-    {
-        id: 'llama-3.2-3b-preview',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.06,
-            output_tokens: 0.06
-        }
-    },
-    {
-        id: 'llama-3.3-70b-versatile',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.59,
-            output_tokens: 0.79
-        }
-    },
-    {
-        id: 'llama-3.1-8b-instant',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.05,
-            output_tokens: 0.08
-        }
-    },
-    {
-        id: 'llama3-70b-8192',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.59,
-            output_tokens: 0.79
-        }
-    },
-    {
-        id: 'llama3-8b-8192',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.05,
-            output_tokens: 0.08
-        }
-    },
-    {
-        id: 'mixtral-8x7b-32768',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.24,
-            output_tokens: 0.24
-        }
-    },
-    {
-        id: 'gemma2-9b-it',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.20,
-            output_tokens: 0.20
-        }
-    },
-    {
-        id: 'llama-3.3-70b-specdec',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.59,
-            output_tokens: 0.99
         }
     }
 ];
