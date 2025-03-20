@@ -41,7 +41,7 @@ export class OpenaAiLlmService extends LlmService {
         const res = await this.request('images/generations', 'POST', body);
         const json = await res.json();
         return {
-            content: json.data[0].url,
+            content: json.data[0].b64_json || json.data[0].url,
             fullResponse: json,
             status: res.status,
         };
@@ -155,7 +155,7 @@ export class OpenaAiLlmService extends LlmService {
             size: req.params?.size,
             style: req.params?.style,
             user: req.params?.user,
-            response_format: req.params?.responseFormat,
+            response_format: req.params?.responseFormat || 'b64_json',
         };
     }
 
