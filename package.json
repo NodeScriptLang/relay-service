@@ -52,7 +52,7 @@
         "typescript": "^5.5.3"
     },
     "dependencies": {
-        "@nodescript/api-proto": "^6.15.0",
+        "@nodescript/api-proto": "^6.15.1",
         "@nodescript/core": "^7.25.2",
         "@nodescript/errors": "^1.2.0",
         "@nodescript/fetch-undici": "^1.4.6",
