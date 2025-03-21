@@ -10,6 +10,7 @@ import { GeminiLlmService } from '../services/llm/GeminiLlmService.js';
 import { GroqLlmService } from '../services/llm/GroqLlmService.js';
 import { LlmService } from '../services/llm/LlmService.js';
 import { OpenaAiLlmService } from '../services/llm/OpenaAiLlmService.js';
+import { PerplexityLlmService } from '../services/llm/PerplexityLlmService.js';
 import { XAiLlmService } from '../services/llm/XAiLlmService.js';
 import { calculateMillicredits } from '../utils/cost.js';
 import { getDate, getHour, HOUR_SECONDS } from '../utils/date.js';
@@ -30,6 +31,7 @@ export class LlmDomainImpl implements LlmDomain {
     @dep() private geminiLlmService!: GeminiLlmService;
     @dep() private groqLlmService!: GroqLlmService;
     @dep() private openaAiLlmService!: OpenaAiLlmService;
+    @dep() private perplexityLlmService!: PerplexityLlmService;
     @dep() private xaiLlmService!: XAiLlmService;
 
     private llmServices: Record<string, LlmService> = {};
@@ -41,6 +43,7 @@ export class LlmDomainImpl implements LlmDomain {
             'gemini': this.geminiLlmService,
             'groq': this.groqLlmService,
             'openai': this.openaAiLlmService,
+            'perplexity': this.perplexityLlmService,
             'xai': this.xaiLlmService
         };
     }
