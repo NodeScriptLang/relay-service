@@ -8,8 +8,7 @@ import { AuthContext } from './AuthContext.js';
 
 export class NodeScriptApi {
 
-    @config({ default: 'https://api.nodescript.dev' })
-    NODESCRIPT_API_URL!: string;
+    @config({ default: 'https://api.nodescript.dev' }) NODESCRIPT_API_URL!: string;
 
     @dep() private ctx!: HttpContext;
     @dep() private authContext!: AuthContext;

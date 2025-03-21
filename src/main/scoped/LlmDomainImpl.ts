@@ -12,7 +12,6 @@ import { LlmService } from '../services/llm/LlmService.js';
 import { OpenaAiLlmService } from '../services/llm/OpenaAiLlmService.js';
 import { PerplexityLlmService } from '../services/llm/PerplexityLlmService.js';
 import { XAiLlmService } from '../services/llm/XAiLlmService.js';
-import { calculateMillicredits } from '../utils/cost.js';
 import { getDate, getHour, HOUR_SECONDS } from '../utils/date.js';
 import { NodeScriptApi } from './NodeScriptApi.js';
 
@@ -75,11 +74,11 @@ export class LlmDomainImpl implements LlmDomain {
 
             const response = await service.generateText(req.request);
 
-            const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
-            const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
-            const skuId = `llm:${providerId}:generateText:${model}`;
-            const skuName = `${providerId}:generateText`;
-            await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+            // const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
+            // const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
+            // const skuId = `llm:${providerId}:generateText:${model}`;
+            // const skuName = `${providerId}:generateText`;
+            // await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
 
             return { response };
         } catch (error) {
@@ -106,11 +105,11 @@ export class LlmDomainImpl implements LlmDomain {
 
             const response = await service.generateStructuredData(req.request);
 
-            const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
-            const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
-            const skuId = `llm:${providerId}:generateStructuredData:${model}`;
-            const skuName = `${providerId}:generateStructuredData`;
-            await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+            // const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
+            // const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
+            // const skuId = `llm:${providerId}:generateStructuredData:${model}`;
+            // const skuName = `${providerId}:generateStructuredData`;
+            // await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
 
             return { response };
         } catch (error) {
@@ -137,11 +136,11 @@ export class LlmDomainImpl implements LlmDomain {
 
             const response = await service.generateImage(req.request);
 
-            const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
-            const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
-            const skuId = `llm:${providerId}:generateImage:${model}`;
-            const skuName = `${providerId}:generateImage`;
-            await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+            // const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
+            // const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
+            // const skuId = `llm:${providerId}:generateImage:${model}`;
+            // const skuName = `${providerId}:generateImage`;
+            // await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
 
             return { response };
         } catch (error) {
