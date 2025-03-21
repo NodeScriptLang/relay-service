@@ -13,6 +13,8 @@ import { GeminiLlmService } from './services/llm/GeminiLlmService.js';
 import { GroqLlmService } from './services/llm/GroqLlmService.js';
 import { OpenaAiLlmService } from './services/llm/OpenaAiLlmService.js';
 import { PerplexityLlmService } from './services/llm/PerplexityLlmService.js';
+import { XAiLlmService } from './services/llm/XAiLlmService.js';
+
 export class HttpScope extends Mesh {
 
     constructor(parent: Mesh) {
@@ -31,6 +33,7 @@ export class HttpScope extends Mesh {
         this.service(GroqLlmService);
         this.service(OpenaAiLlmService);
         this.service(PerplexityLlmService);
+        this.service(XAiLlmService);
     }
 
 }
