@@ -1,4 +1,4 @@
-import { ApiProtocol, apiProtocol, Org, UsageLabels, Workspace } from '@nodescript/api-proto';
+import { ApiProtocol, apiProtocol, UsageLabels } from '@nodescript/api-proto';
 import { HttpContext } from '@nodescript/http-server';
 import { createHttpClient } from '@nodescript/protocomm';
 import { config } from 'mesh-config';
@@ -21,25 +21,17 @@ export class NodeScriptApi {
         return token.workspaceId;
     }
 
-    async getWorkspace(workspaceId: string): Promise<Workspace> {
-        const client = this.createClient();
-        const { workspace } = await client.Workspace.getWorkspaceById({ id: workspaceId });
-        return workspace;
-    }
-
-    async getOrg(orgId: string): Promise<Org> {
-        const client = this.createClient();
-        const { org } = await client.Org.getOrgById({ id: orgId });
-        return org;
-    }
-
     async addUsage(millicredits: number, skuId: string, skuName: string, status: number): Promise<void> {
+        const client = this.createClient();
+
         const token = this.authContext.requireAuth();
         if (!token.orgId || !token.workspaceId) {
             throw new Error('Invalid token');
         }
-        const org = await this.getOrg(token.orgId);
-        const workspace = await this.getWorkspace(token.workspaceId);
+
+        const { org } = await client.Org.getOrgById({ id: token.orgId });
+        const { workspace } = await client.Workspace.getWorkspaceById({ id: token.workspaceId });
+
         const usage: UsageLabels = {
             orgId: org.id,
             orgName: org.displayName,
@@ -49,7 +41,6 @@ export class NodeScriptApi {
             skuName,
             status: String(status),
         };
-        const client = this.createClient();
         await client.Billing.addUsage({ millicredits, usage });
     }
 
