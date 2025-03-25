@@ -8,6 +8,7 @@ import { AuthContext } from './AuthContext.js';
 
 export class NodeScriptApi {
 
+    @config({}) NODESCRIPT_TOKEN!: string;
     @config({ default: 'https://api.nodescript.dev' }) NODESCRIPT_API_URL!: string;
 
     @dep() private ctx!: HttpContext;
@@ -32,6 +33,7 @@ export class NodeScriptApi {
         const { org } = await client.Org.getOrgById({ id: token.orgId });
         const { workspace } = await client.Workspace.getWorkspaceById({ id: token.workspaceId });
 
+        const backendClient = this.createBackendClient();
         const usage: UsageLabels = {
             orgId: org.id,
             orgName: org.displayName,
@@ -41,7 +43,16 @@ export class NodeScriptApi {
             skuName,
             status: String(status),
         };
-        await client.Billing.addUsage({ millicredits, usage });
+        await backendClient.Billing.addUsage({ millicredits, usage });
+    }
+
+    protected createBackendClient(): ApiProtocol {
+        return createHttpClient(apiProtocol, {
+            baseUrl: this.NODESCRIPT_API_URL,
+            headers: {
+                'Authorization': `Bearer ${this.NODESCRIPT_TOKEN}`,
+            },
+        });
     }
 
     protected createClient(): ApiProtocol {
