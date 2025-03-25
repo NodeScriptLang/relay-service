@@ -1,5 +1,6 @@
 import { ApiProtocol, apiProtocol, UsageLabels } from '@nodescript/api-proto';
 import { HttpContext } from '@nodescript/http-server';
+import { Logger } from '@nodescript/logger';
 import { createHttpClient } from '@nodescript/protocomm';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
@@ -13,6 +14,7 @@ export class NodeScriptApi {
 
     @dep() private ctx!: HttpContext;
     @dep() private authContext!: AuthContext;
+    @dep() private logger!: Logger;
 
     async getWorkspaceId(): Promise<string> {
         const token = this.authContext.requireAuth();
@@ -44,6 +46,7 @@ export class NodeScriptApi {
             status: String(status),
         };
         await backendClient.Billing.addUsage({ millicredits, usage });
+        this.logger.info('Usage added', { orgId: org.id, workspaceId: workspace.id, skuId, skuName, millicredits });
     }
 
     protected createBackendClient(): ApiProtocol {

@@ -5,8 +5,8 @@ import { LlmService } from './LlmService.js';
 
 export class GeminiLlmService extends LlmService {
 
-    @config({ default: 'https://generativelanguage.googleapis.com/v1beta/' }) GEMINI_BASE_URL!: string;
     @config() LLM_GEMINI_API_KEY!: string;
+    @config({ default: 'https://generativelanguage.googleapis.com/v1beta/' }) GEMINI_BASE_URL!: string;
 
     getModels() {
         return models;

@@ -5,8 +5,8 @@ import { LlmService } from './LlmService.js';
 
 export class AnthropicLlmService extends LlmService {
 
-    @config({ default: 'https://api.anthropic.com/v1/' }) ANTHROPIC_BASE_URL!: string;
     @config() LLM_ANTHROPIC_API_KEY!: string;
+    @config({ default: 'https://api.anthropic.com/v1/' }) ANTHROPIC_BASE_URL!: string;
     @config({ default: 1024 }) DEFAULT_MAX_TOKENS!: number;
 
     getModels() {

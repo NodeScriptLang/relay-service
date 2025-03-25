@@ -5,8 +5,8 @@ import { LlmService } from './LlmService.js';
 
 export class XAiLlmService extends LlmService {
 
-    @config({ default: 'https://api.x.ai/v1/' }) XAI_BASE_URL!: string;
     @config() LLM_XAI_API_KEY!: string;
+    @config({ default: 'https://api.x.ai/v1/' }) XAI_BASE_URL!: string;
 
     getModels() {
         return models;

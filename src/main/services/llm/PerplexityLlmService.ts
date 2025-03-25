@@ -5,8 +5,8 @@ import { LlmService } from './LlmService.js';
 
 export class PerplexityLlmService extends LlmService {
 
-    @config({ default: 'https://api.perplexity.ai/' }) PERPLEXITY_BASE_URL!: string;
     @config() LLM_PERPLEXITY_API_KEY!: string;
+    @config({ default: 'https://api.perplexity.ai/' }) PERPLEXITY_BASE_URL!: string;
 
     getModels() {
         return models;
