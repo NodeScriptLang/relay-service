@@ -14,7 +14,7 @@ export abstract class LlmService {
         const err: any = new Error(error.message || 'Unknown LLM service error');
         err.originalError = error;
         err.code = error.code || 'UNKNOWN_ERROR';
-        err.type = error.name || 'Error';
+        err.type = error.name || 'LlmServiceError';
         err.status = error.status || 500;
         err.details = error.details || {};
         if (error.response) {
