@@ -3,6 +3,5 @@ export function calculateMillicredits(cost: number, pricePerCredit: number): num
         return 0;
     }
     const millicredits = (cost / Number(pricePerCredit)) * 1000;
-    const multiplier = 100;
-    return Math.ceil(millicredits * multiplier) / multiplier;
+    return Math.ceil(millicredits);
 }
