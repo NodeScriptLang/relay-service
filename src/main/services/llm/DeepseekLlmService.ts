@@ -5,9 +5,9 @@ import { LlmService } from './LlmService.js';
 
 export class DeepseekLlmService extends LlmService {
 
+    @config() LLM_DEEPSEEK_API_KEY!: string;
     @config({ default: 'https://api.deepseek.com/v1/' }) DEEPSEEK_BASE_URL!: string;
     @config({ default: 1_000_000 }) DEEPSEEK_PRICE_PER_TOKENS!: number;
-    @config() LLM_DEEPSEEK_API_KEY!: string;
 
     getModels() {
         return models;

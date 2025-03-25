@@ -5,8 +5,8 @@ import { LlmService } from './LlmService.js';
 
 export class OpenaAiLlmService extends LlmService {
 
-    @config({ default: 'https://api.openai.com/v1/' }) OPENAI_BASE_URL!: string;
     @config() LLM_OPENAI_API_KEY!: string;
+    @config({ default: 'https://api.openai.com/v1/' }) OPENAI_BASE_URL!: string;
 
     getModels() {
         return models;

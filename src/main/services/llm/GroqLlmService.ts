@@ -5,8 +5,8 @@ import { LlmService } from './LlmService.js';
 
 export class GroqLlmService extends LlmService {
 
-    @config({ default: 'https://api.groq.com/openai/v1/' }) GROQ_BASE_URL!: string;
     @config() LLM_GROQ_API_KEY!: string;
+    @config({ default: 'https://api.groq.com/openai/v1/' }) GROQ_BASE_URL!: string;
 
     getModels() {
         return models;

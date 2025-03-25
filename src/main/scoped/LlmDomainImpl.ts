@@ -1,4 +1,5 @@
 import { RateLimitExceededError } from '@nodescript/errors';
+import { Logger } from '@nodescript/logger';
 import { LlmCompleteResponse, LlmDomain, LlmGenerateImage, LlmGenerateStructuredData, LlmGenerateText, LlmModelType } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
@@ -23,6 +24,7 @@ export class LlmDomainImpl implements LlmDomain {
     @config({ default: 120 }) LLM_RATE_LIMIT!: number;
     @config({ default: HOUR_SECONDS }) LLM_RATE_LIMIT_TTL_SECONDS!: number;
 
+    @dep() private logger!: Logger;
     @dep() private nsApi!: NodeScriptApi;
     @dep() private redis!: RedisManager;
 
@@ -74,6 +76,7 @@ export class LlmDomainImpl implements LlmDomain {
             await this.handleRateLimit(workspaceId);
 
             const response = await service.generateText(req.request);
+            this.logger.info('LLM service generateText', { providerId, model, status: response.status });
 
             const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
             const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
@@ -105,6 +108,7 @@ export class LlmDomainImpl implements LlmDomain {
             await this.handleRateLimit(workspaceId);
 
             const response = await service.generateStructuredData(req.request);
+            this.logger.info('LLM service generateStructuredData', { providerId, model, status: response.status });
 
             const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
             const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
@@ -136,6 +140,7 @@ export class LlmDomainImpl implements LlmDomain {
             await this.handleRateLimit(workspaceId);
 
             const response = await service.generateImage(req.request);
+            this.logger.info('LLM service generateImage', { providerId, model, status: response.status });
 
             const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
             const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
