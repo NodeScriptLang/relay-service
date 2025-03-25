@@ -12,6 +12,7 @@ import { LlmService } from '../services/llm/LlmService.js';
 import { OpenaAiLlmService } from '../services/llm/OpenaAiLlmService.js';
 import { PerplexityLlmService } from '../services/llm/PerplexityLlmService.js';
 import { XAiLlmService } from '../services/llm/XAiLlmService.js';
+import { calculateMillicredits } from '../utils/cost.js';
 import { getDate, getHour, HOUR_SECONDS } from '../utils/date.js';
 import { NodeScriptApi } from './NodeScriptApi.js';
 
