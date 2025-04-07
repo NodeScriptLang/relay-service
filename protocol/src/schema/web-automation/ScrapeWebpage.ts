@@ -6,7 +6,7 @@ export interface ScrapeWebpage {
     javascript: string;
     sleep: number;
     cookies: any;
-    outputScreenshot: boolean;
+    outputScreenshots: boolean;
 }
 
 export const ScrapeWebpageSchema = new Schema<ScrapeWebpage>({
@@ -17,6 +17,6 @@ export const ScrapeWebpageSchema = new Schema<ScrapeWebpage>({
         javascript: { type: 'string' },
         sleep: { type: 'number' },
         cookies: { type: 'any' },
-        outputScreenshot: { type: 'boolean' },
+        outputScreenshots: { type: 'boolean' },
     },
 });

@@ -8,4 +8,7 @@ export * from './schema/llm/LlmGenerateText.js';
 export * from './schema/llm/LlmImageModelParams.js';
 export * from './schema/llm/LlmModelType.js';
 export * from './schema/llm/LlmTextModelParams.js';
+export * from './schema/web-automation/Cookie.js';
 export * from './schema/web-automation/ScrapeWebpage.js';
+export * from './schema/web-automation/ScrapeWebpageResponse.js';
+export * from './schema/web-automation/WebLink.js';
