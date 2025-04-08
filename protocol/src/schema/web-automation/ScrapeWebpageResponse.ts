@@ -9,7 +9,7 @@ export interface ScrapeWebpageResponse {
     title: string;
     text: string;
     markdown: string;
-    parsedJson: Record<string, any>;
+    parsedJson: Array<Record<string, any>>;
     html: string;
     images: string[];
     allImages: string[];
@@ -25,11 +25,7 @@ export const ScrapeWebpageResponseSchema = new Schema<ScrapeWebpageResponse>({
         title: { type: 'string' },
         text: { type: 'string' },
         markdown: { type: 'string' },
-        parsedJson: {
-            type: 'object',
-            properties: {},
-            additionalProperties: { type: 'any' }
-        },
+        parsedJson: { type: 'any' },
         html: { type: 'string' },
         images: {
             type: 'array',

@@ -29,10 +29,7 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
             await this.handleRateLimit(workspaceId);
 
             const res = await this.webAutomationService.scrapeWebpage(req.request);
-            this.logger.info('WebAutomationDomainImpl scrapeWebpage', { url, status: res.status });
-            // console.log('res: ', res);
-            // const output = await this.webAutomationService.getOutput(res.id);
-            // console.log('output: ', output);
+            this.logger.info('WebAutomationDomainImpl scrapeWebpage', { url });
             // const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
             // const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
             // const skuId = `llm:${providerId}:generateText:${model}`;

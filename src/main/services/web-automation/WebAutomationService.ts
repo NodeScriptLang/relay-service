@@ -1,4 +1,4 @@
-import { ScrapeWebpage } from '@nodescript/relay-protocol';
+import { ScrapeWebpage, ScrapeWebpageResponse } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 export interface AutomationCloudRequest {
@@ -14,8 +14,11 @@ export class WebAutomationService {
     @config() WEB_AUTOMATION_AC_ORGANISATION_ID!: string;
     @config({ default: 'https://api.automationcloud.net' }) WEB_AUTOMATION_AC_API_URL!: string;
 
-    async scrapeWebpage(request: ScrapeWebpage) {
-        const res = await this.sendRequest({
+    @config({ default: 2000 }) MAX_POLL_ATTEMPTS!: number;
+    @config({ default: 2000 }) POLL_INTERVAL_MS!: number;
+
+    async scrapeWebpage(request: ScrapeWebpage): Promise<ScrapeWebpageResponse> {
+        const job = await this.sendRequest({
             method: 'POST',
             path: 'jobs',
             body: {
@@ -30,7 +33,36 @@ export class WebAutomationService {
                 category: 'live',
             }
         });
-        return res;
+
+        let currentJob = job;
+        let attempts = 0;
+
+        // Wait for job state to be success
+        while (currentJob.state !== 'success' && attempts < this.MAX_POLL_ATTEMPTS) {
+            await new Promise(resolve => setTimeout(resolve, this.POLL_INTERVAL_MS));
+
+            currentJob = await this.getJob(job.id);
+            attempts++;
+
+            if (currentJob.state === 'failed' || currentJob.state === 'error') {
+                throw this.handleError({
+                    message: `Web automation job failed: ${currentJob.error || 'Unknown error'}`,
+                    code: 'JOB_FAILED',
+                    details: currentJob
+                });
+            }
+        }
+
+        if (currentJob.state !== 'success') {
+            throw this.handleError({
+                message: 'Web automation job timed out',
+                code: 'JOB_TIMEOUT',
+                details: currentJob
+            });
+        }
+
+        const jobOutputs = await this.getJobOutputs(job.id);
+        return this.parseJobOutputs(jobOutputs);
     }
 
     private async sendRequest(request: AutomationCloudRequest) {
@@ -51,12 +83,43 @@ export class WebAutomationService {
         return await res.json(); ;
     }
 
-    async getOutput(jobId: string) {
+    async getJob(jobId: string) {
+        const res = await this.sendRequest({
+            method: 'GET',
+            path: `jobs/${jobId}`
+        });
+        return res;
+    }
+
+    async getJobOutputs(jobId: string): Promise<Array<Record<string, any>>> {
         const res = await this.sendRequest({
             method: 'GET',
             path: `jobs/${jobId}/outputs`
         });
         return res;
+    }
+
+    private parseJobOutputs(jobOutput: any): ScrapeWebpageResponse {
+        const outputs = Array.isArray(jobOutput?.data) ? jobOutput.data : (Array.isArray(jobOutput) ? jobOutput : []);
+
+        const pairs = outputs
+            .filter((output: any) => output.key && output.data !== undefined)
+            .map((output: any) => [output.key, output.data]);
+        const result = Object.fromEntries(pairs);
+
+        return {
+            input: result.inputUrl || '',
+            url: result.url || '',
+            title: result.title || '',
+            text: result.text || '',
+            markdown: result.markdown || '',
+            parsedJson: result.parsedJson || [],
+            html: result.html || '',
+            images: Array.isArray(result.images) ? result.images : [],
+            allImages: Array.isArray(result.allImages) ? result.allImages : [],
+            links: Array.isArray(result.links) ? result.links : [],
+            cookies: Array.isArray(result.cookies) ? result.cookies : []
+        };
     }
 
     handleError(error: any): Error {
