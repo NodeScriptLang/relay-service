@@ -7,6 +7,7 @@ import { MainHttpHandler } from './scoped/MainHttpHandler.js';
 import { NodeScriptApi } from './scoped/NodeScriptApi.js';
 import { RelayProtocolHandler } from './scoped/RelayProtocolHandler.js';
 import { RelayProtocolImpl } from './scoped/RelayProtocolImpl.js';
+import { WebAutomationDomainImpl } from './scoped/WebAutomationDomainImpl.js';
 import { AnthropicLlmService } from './services/llm/AnthropicLlmService.js';
 import { DeepseekLlmService } from './services/llm/DeepseekLlmService.js';
 import { GeminiLlmService } from './services/llm/GeminiLlmService.js';
@@ -14,6 +15,7 @@ import { GroqLlmService } from './services/llm/GroqLlmService.js';
 import { OpenaAiLlmService } from './services/llm/OpenaAiLlmService.js';
 import { PerplexityLlmService } from './services/llm/PerplexityLlmService.js';
 import { XAiLlmService } from './services/llm/XAiLlmService.js';
+import { WebAutomationService } from './services/web-automation/WebAutomationService.js';
 
 export class HttpScope extends Mesh {
 
@@ -26,6 +28,7 @@ export class HttpScope extends Mesh {
         this.service(HttpAuthHandler);
         this.service(MainHttpHandler);
         this.service(NodeScriptApi);
+        this.service(WebAutomationDomainImpl);
         // LLM Services
         this.service(AnthropicLlmService);
         this.service(DeepseekLlmService);
@@ -34,6 +37,8 @@ export class HttpScope extends Mesh {
         this.service(OpenaAiLlmService);
         this.service(PerplexityLlmService);
         this.service(XAiLlmService);
+        // Web Automation Service
+        this.service(WebAutomationService);
     }
 
 }
