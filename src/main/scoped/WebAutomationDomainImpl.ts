@@ -6,12 +6,13 @@ import { dep } from 'mesh-ioc';
 
 import { RedisManager } from '../global/RedisManager.js';
 import { WebAutomationService } from '../services/web-automation/WebAutomationService.js';
+import { calculateMillicredits } from '../utils/cost.js';
 import { getDate, getHour, HOUR_SECONDS } from '../utils/date.js';
 import { NodeScriptApi } from './NodeScriptApi.js';
 
 export class WebAutomationDomainImpl implements WebAutomationDomain {
 
-    @config() WEB_AUTOMATION_PRICE_PER_CREDIT!: number;
+    @config({ default: 0.00029 }) WEB_AUTOMATION_PRICE_PER_CREDIT!: number;
 
     @config({ default: 120 }) WEB_AUTOMATION_RATE_LIMIT!: number;
     @config({ default: HOUR_SECONDS }) WEB_AUTOMATION_RATE_LIMIT_TTL_SECONDS!: number;
@@ -30,11 +31,11 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
 
             const res = await this.webAutomationService.scrapeWebpage(req.request);
             this.logger.info('WebAutomationDomainImpl scrapeWebpage', { url });
-            // const cost = service.calculateCost(req.request.model, response.fullResponse, req.request.params);
-            // const millicredits = calculateMillicredits(cost, this.LLM_PRICE_PER_CREDIT);
-            // const skuId = `llm:${providerId}:generateText:${model}`;
-            // const skuName = `${providerId}:generateText`;
-            // await this.nsApi.addUsage(millicredits, skuId, skuName, response.status);
+            const cost = 1; // TODO - cvs - add cost
+            const millicredits = calculateMillicredits(cost, this.WEB_AUTOMATION_PRICE_PER_CREDIT);
+            const skuId = 'webAutomation:scrapeWebpage';
+            const skuName = 'Web Automation Scrape Webpage';
+            await this.nsApi.addUsage(millicredits, skuId, skuName, 200);
             return { response: res };
         } catch (error) {
             this.logger.error('WebAutomationDomainImpl scrapeWebpage', { url, error });
