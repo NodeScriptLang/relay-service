@@ -44,8 +44,7 @@ export class WebAutomationService {
                 currentJob = await this.getJob(job.id);
                 attempts++;
 
-                if (currentJob.state === 'fail' || currentJob.state === 'error') {
-                    await this.cancelJob(job.id);
+                if (currentJob.state === 'fail') {
                     throw this.handleError({
                         message: `Web automation job failed: ${currentJob.error || 'Unknown error'}`,
                         code: 'JOB_FAILED',
@@ -55,24 +54,19 @@ export class WebAutomationService {
             }
 
             if (currentJob.state !== 'success') {
-                await this.cancelJob(job.id);
                 throw this.handleError({
                     message: 'Web automation job timed out',
                     code: 'JOB_TIMEOUT',
                     details: currentJob
                 });
             }
+
+            const jobOutputs = await this.getJobOutputs(job.id);
+            return this.parseJobOutputs(jobOutputs);
         } catch (error) {
-            try {
-                await this.cancelJob(job.id);
-            } catch (cancelError) {
-                console.error('Failed to cancel job after error:', cancelError);
-            }
+            this.cancelJob(job.id);
             throw error;
         }
-
-        const jobOutputs = await this.getJobOutputs(job.id);
-        return this.parseJobOutputs(jobOutputs);
     }
 
     private async sendRequest(request: AutomationCloudRequest) {
