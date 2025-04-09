@@ -14,7 +14,7 @@ export class WebAutomationService {
     @config() WEB_AUTOMATION_AC_ORGANISATION_ID!: string;
     @config({ default: 'https://api.automationcloud.net' }) WEB_AUTOMATION_AC_API_URL!: string;
 
-    @config({ default: 2000 }) MAX_POLL_ATTEMPTS!: number;
+    @config({ default: 60 }) MAX_POLL_ATTEMPTS!: number;
     @config({ default: 2000 }) POLL_INTERVAL_MS!: number;
 
     async scrapeWebpage(request: ScrapeWebpage): Promise<ScrapeWebpageResponse> {
@@ -37,28 +37,38 @@ export class WebAutomationService {
         let currentJob = job;
         let attempts = 0;
 
-        // Wait for job state to be success
-        while (currentJob.state !== 'success' && attempts < this.MAX_POLL_ATTEMPTS) {
-            await new Promise(resolve => setTimeout(resolve, this.POLL_INTERVAL_MS));
+        try {
+            while (currentJob.state !== 'success' && attempts < this.MAX_POLL_ATTEMPTS) {
+                await new Promise(resolve => setTimeout(resolve, this.POLL_INTERVAL_MS));
 
-            currentJob = await this.getJob(job.id);
-            attempts++;
+                currentJob = await this.getJob(job.id);
+                attempts++;
 
-            if (currentJob.state === 'failed' || currentJob.state === 'error') {
+                if (currentJob.state === 'fail' || currentJob.state === 'error') {
+                    await this.cancelJob(job.id);
+                    throw this.handleError({
+                        message: `Web automation job failed: ${currentJob.error || 'Unknown error'}`,
+                        code: 'JOB_FAILED',
+                        details: currentJob
+                    });
+                }
+            }
+
+            if (currentJob.state !== 'success') {
+                await this.cancelJob(job.id);
                 throw this.handleError({
-                    message: `Web automation job failed: ${currentJob.error || 'Unknown error'}`,
-                    code: 'JOB_FAILED',
+                    message: 'Web automation job timed out',
+                    code: 'JOB_TIMEOUT',
                     details: currentJob
                 });
             }
-        }
-
-        if (currentJob.state !== 'success') {
-            throw this.handleError({
-                message: 'Web automation job timed out',
-                code: 'JOB_TIMEOUT',
-                details: currentJob
-            });
+        } catch (error) {
+            try {
+                await this.cancelJob(job.id);
+            } catch (cancelError) {
+                console.error('Failed to cancel job after error:', cancelError);
+            }
+            throw error;
         }
 
         const jobOutputs = await this.getJobOutputs(job.id);
@@ -83,7 +93,7 @@ export class WebAutomationService {
         return await res.json(); ;
     }
 
-    async getJob(jobId: string) {
+    private async getJob(jobId: string) {
         const res = await this.sendRequest({
             method: 'GET',
             path: `jobs/${jobId}`
@@ -91,12 +101,19 @@ export class WebAutomationService {
         return res;
     }
 
-    async getJobOutputs(jobId: string): Promise<Array<Record<string, any>>> {
+    private async getJobOutputs(jobId: string): Promise<Array<Record<string, any>>> {
         const res = await this.sendRequest({
             method: 'GET',
             path: `jobs/${jobId}/outputs`
         });
         return res;
+    }
+
+    async cancelJob(jobId: string) {
+        return this.sendRequest({
+            method: 'POST',
+            path: `jobs/${jobId}/cancel`
+        });
     }
 
     private parseJobOutputs(jobOutput: any): ScrapeWebpageResponse {
