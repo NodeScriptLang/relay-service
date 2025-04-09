@@ -1,11 +1,13 @@
 import { Schema } from 'airtight';
 
+import { Cookie, CookieSchema } from './Cookie.js';
+
 export interface ScrapeWebpage {
     url: string;
     proxyUrl?: string;
     javascript?: string;
     sleep?: number;
-    cookies?: any;
+    cookies?: Cookie[];
     outputScreenshots?: boolean;
 }
 
@@ -26,7 +28,8 @@ export const ScrapeWebpageSchema = new Schema<ScrapeWebpage>({
             optional: true,
         },
         cookies: {
-            type: 'any',
+            type: 'array',
+            items: CookieSchema.schema,
             optional: true,
         },
         outputScreenshots: {
