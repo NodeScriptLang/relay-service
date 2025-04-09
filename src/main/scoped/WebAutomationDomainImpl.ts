@@ -1,6 +1,6 @@
 import { RateLimitExceededError } from '@nodescript/errors';
 import { Logger } from '@nodescript/logger';
-import { ScrapeWebpage, ScrapeWebpageResponse, WebAutomationDomain } from '@nodescript/relay-protocol';
+import { ScrapePdf, ScrapeWebpage, ScrapeWebpageResponse, WebAutomationDomain } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
@@ -39,6 +39,27 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
             return { response: res };
         } catch (error) {
             this.logger.error('WebAutomationDomainImpl scrapeWebpage', { url, error });
+            throw error;
+        }
+    }
+
+    async scrapePdf(req: { request: ScrapePdf }): Promise<{ response: string }> {
+        const { url } = req.request;
+
+        try {
+            const workspaceId = await this.nsApi.getWorkspaceId();
+            await this.handleRateLimit(workspaceId);
+
+            const res = await this.webAutomationService.scrapePdf(req.request);
+            this.logger.info('WebAutomationDomainImpl scrapePdf', { url });
+            const cost = 1; // TODO - cvs - add cost
+            const millicredits = calculateMillicredits(cost, this.WEB_AUTOMATION_PRICE_PER_CREDIT);
+            const skuId = 'webAutomation:scrapePdf';
+            const skuName = 'Web Automation Scrape Pdf';
+            await this.nsApi.addUsage(millicredits, skuId, skuName, 200);
+            return { response: res };
+        } catch (error) {
+            this.logger.error('WebAutomationDomainImpl scrapePdf', { url, error });
             throw error;
         }
     }

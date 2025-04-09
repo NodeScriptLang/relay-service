@@ -1,4 +1,4 @@
-import { ScrapeWebpage, ScrapeWebpageResponse } from '@nodescript/relay-protocol';
+import { ScrapePdf, ScrapeWebpage, ScrapeWebpageResponse } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 export interface AutomationCloudRequest {
@@ -74,6 +74,72 @@ export class WebAutomationService {
         const jobOutputs = await this.getJobOutputs(job.id);
         return this.parseJobOutputs(jobOutputs);
     }
+
+    async scrapePdf(request: ScrapePdf): Promise<string> {
+        const job = await this.sendRequest({
+            method: 'POST',
+            path: 'jobs',
+            body: {
+                input: {
+                    url: request.url,
+                },
+                serviceId: this.WEB_AUTOMATION_AC_SERVICE_ID,
+                category: 'live',
+            }
+        });
+
+        let currentJob = job;
+        let attempts = 0;
+
+        try {
+            while (currentJob.state !== 'success' && attempts < this.MAX_POLL_ATTEMPTS) {
+                await new Promise(resolve => setTimeout(resolve, this.POLL_INTERVAL_MS));
+
+                currentJob = await this.getJob(job.id);
+                attempts++;
+
+                if (currentJob.state === 'fail' || currentJob.state === 'error') {
+                    await this.cancelJob(job.id);
+                    throw this.handleError({
+                        message: `PDF scraping job failed: ${currentJob.error || 'Unknown error'}`,
+                        code: 'JOB_FAILED',
+                        details: currentJob
+                    });
+                }
+            }
+
+            if (currentJob.state !== 'success') {
+                await this.cancelJob(job.id);
+                throw this.handleError({
+                    message: 'PDF scraping job timed out',
+                    code: 'JOB_TIMEOUT',
+                    details: currentJob
+                });
+            }
+        } catch (error) {
+            try {
+                await this.cancelJob(job.id);
+            } catch (cancelError) {
+                console.error('Failed to cancel job after error:', cancelError);
+            }
+            throw error;
+        }
+
+        const jobOutputs = await this.getJobOutputs(job.id);
+
+        const textOutput = jobOutputs.find((output: any) => output.key === 'text' || output.key === 'content');
+        if (!textOutput || textOutput.data === undefined) {
+            throw this.handleError({
+                message: 'PDF content not found in job outputs',
+                code: 'INVALID_OUTPUT',
+                details: { jobOutputs }
+            });
+        }
+
+        return textOutput.data;
+    }
+
+    // Helpers
 
     private async sendRequest(request: AutomationCloudRequest) {
         const res = await fetch(`${this.WEB_AUTOMATION_AC_API_URL}/${request.path}`, {
