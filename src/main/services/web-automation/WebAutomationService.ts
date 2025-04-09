@@ -75,7 +75,7 @@ export class WebAutomationService {
         return this.parseJobOutputs(jobOutputs);
     }
 
-    private async sendRequest(request: AutomationCloudRequest) {
+    private async sendRequest(request: AutomationCloudRequest, responseType: 'json' | 'binary' = 'json') {
         const res = await fetch(`${this.WEB_AUTOMATION_AC_API_URL}/${request.path}`, {
             method: request.method,
             headers: {
@@ -90,7 +90,12 @@ export class WebAutomationService {
                 }) } :
                 {})
         });
-        return await res.json(); ;
+
+        if (responseType === 'binary') {
+            return await res.blob();
+        }
+
+        return await res.json();
     }
 
     private async getJob(jobId: string) {
@@ -109,11 +114,18 @@ export class WebAutomationService {
         return res;
     }
 
-    async cancelJob(jobId: string) {
+    private async cancelJob(jobId: string) {
         return this.sendRequest({
             method: 'POST',
             path: `jobs/${jobId}/cancel`
         });
+    }
+
+    private async getJobScreenshots(jobId: string) {
+        return this.sendRequest({
+            method: 'GET',
+            path: `jobs/${jobId}/screenshots`,
+        }, 'binary');
     }
 
     private parseJobOutputs(jobOutput: any): ScrapeWebpageResponse {
