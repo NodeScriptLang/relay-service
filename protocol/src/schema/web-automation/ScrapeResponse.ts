@@ -3,7 +3,7 @@ import { Schema } from 'airtight';
 import { Cookie, CookieSchema } from './Cookie.js';
 import { WebLink, WebLinkSchema } from './WebLink.js';
 
-export interface ScrapeWebpageResponse {
+export interface ScrapeResponse {
     input: string;
     url: string;
     title: string;
@@ -17,7 +17,7 @@ export interface ScrapeWebpageResponse {
     cookies: Cookie[];
 }
 
-export const ScrapeWebpageResponseSchema = new Schema<ScrapeWebpageResponse>({
+export const ScrapeResponseSchema = new Schema<ScrapeResponse>({
     type: 'object',
     properties: {
         input: { type: 'string' },

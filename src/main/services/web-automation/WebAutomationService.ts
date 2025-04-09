@@ -1,4 +1,4 @@
-import { ScrapePdf, ScrapeWebpage, ScrapeWebpageResponse } from '@nodescript/relay-protocol';
+import { ScrapePdf, ScrapeResponse, ScrapeWebpage } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 export interface AutomationCloudRequest {
@@ -10,26 +10,21 @@ export interface AutomationCloudRequest {
 export class WebAutomationService {
 
     @config() WEB_AUTOMATION_AC_SECRET_KEY!: string;
-    @config() WEB_AUTOMATION_AC_SERVICE_ID!: string;
+    @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_WEBPAGE!: string;
+    @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_PDF!: string;
     @config() WEB_AUTOMATION_AC_ORGANISATION_ID!: string;
     @config({ default: 'https://api.automationcloud.net' }) WEB_AUTOMATION_AC_API_URL!: string;
 
     @config({ default: 60 }) MAX_POLL_ATTEMPTS!: number;
     @config({ default: 2000 }) POLL_INTERVAL_MS!: number;
 
-    async scrapeWebpage(request: ScrapeWebpage): Promise<ScrapeWebpageResponse> {
+    private async executeJob(jobInput: Record<string, any>, serviceId: string): Promise<any> {
         const job = await this.sendRequest({
             method: 'POST',
             path: 'jobs',
             body: {
-                input: {
-                    url: request.url,
-                    proxyUrl: request.proxyUrl,
-                    javascript: request.javascript,
-                    sleep: request.sleep,
-                    cookies: request.cookies,
-                },
-                serviceId: this.WEB_AUTOMATION_AC_SERVICE_ID,
+                input: jobInput,
+                serviceId,
                 category: 'live',
             }
         });
@@ -46,7 +41,7 @@ export class WebAutomationService {
 
                 if (currentJob.state === 'fail') {
                     throw this.handleError({
-                        message: `Web automation job failed: ${currentJob.error || 'Unknown error'}`,
+                        message: `Job failed: ${currentJob.error || 'Unknown error'}`,
                         code: 'JOB_FAILED',
                         details: currentJob
                     });
@@ -55,82 +50,39 @@ export class WebAutomationService {
 
             if (currentJob.state !== 'success') {
                 throw this.handleError({
-                    message: 'Web automation job timed out',
+                    message: 'Job timed out',
                     code: 'JOB_TIMEOUT',
                     details: currentJob
                 });
             }
 
-            const jobOutputs = await this.getJobOutputs(job.id);
-            return this.parseJobOutputs(jobOutputs);
+            return await this.getJobOutputs(job.id);
         } catch (error) {
-            this.cancelJob(job.id);
+            this.cancelJob(job.id).catch(() => {});
             throw error;
         }
     }
 
+    async scrapeWebpage(request: ScrapeWebpage): Promise<ScrapeResponse> {
+        const jobOutputs = await this.executeJob({
+            url: request.url,
+            proxyUrl: request.proxyUrl,
+            javascript: request.javascript,
+            sleep: request.sleep,
+            cookies: request.cookies,
+        }, this.WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_WEBPAGE);
+        return this.parseJobOutputs(jobOutputs);
+    }
+
     async scrapePdf(request: ScrapePdf): Promise<string> {
-        const job = await this.sendRequest({
-            method: 'POST',
-            path: 'jobs',
-            body: {
-                input: {
-                    url: request.url,
-                },
-                serviceId: this.WEB_AUTOMATION_AC_SERVICE_ID,
-                category: 'live',
-            }
-        });
-
-        let currentJob = job;
-        let attempts = 0;
-
-        try {
-            while (currentJob.state !== 'success' && attempts < this.MAX_POLL_ATTEMPTS) {
-                await new Promise(resolve => setTimeout(resolve, this.POLL_INTERVAL_MS));
-
-                currentJob = await this.getJob(job.id);
-                attempts++;
-
-                if (currentJob.state === 'fail' || currentJob.state === 'error') {
-                    await this.cancelJob(job.id);
-                    throw this.handleError({
-                        message: `PDF scraping job failed: ${currentJob.error || 'Unknown error'}`,
-                        code: 'JOB_FAILED',
-                        details: currentJob
-                    });
-                }
-            }
-
-            if (currentJob.state !== 'success') {
-                await this.cancelJob(job.id);
-                throw this.handleError({
-                    message: 'PDF scraping job timed out',
-                    code: 'JOB_TIMEOUT',
-                    details: currentJob
-                });
-            }
-        } catch (error) {
-            try {
-                await this.cancelJob(job.id);
-            } catch (cancelError) {
-                console.error('Failed to cancel job after error:', cancelError);
-            }
-            throw error;
+        const jobOutputs = await this.executeJob({
+            url: request.url,
+        }, this.WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_PDF);
+        const parsed = this.parseJobOutputs(jobOutputs);
+        if (request.responseFormat === 'text') {
+            return parsed.text;
         }
-
-        const jobOutputs = await this.getJobOutputs(job.id);
-
-        const textOutput = jobOutputs.find((output: any) => output.key === 'text' || output.key === 'content');
-        if (!textOutput || textOutput.data === undefined) {
-            throw this.handleError({
-                message: 'PDF content not found in job outputs',
-                code: 'INVALID_OUTPUT',
-                details: { jobOutputs }
-            });
-        }
-
-        return textOutput.data;
+        return parsed.markdown;
     }
 
     // Helpers
@@ -176,7 +128,7 @@ export class WebAutomationService {
         });
     }
 
-    private parseJobOutputs(jobOutput: any): ScrapeWebpageResponse {
+    private parseJobOutputs(jobOutput: any): ScrapeResponse {
         const outputs = Array.isArray(jobOutput?.data) ? jobOutput.data : (Array.isArray(jobOutput) ? jobOutput : []);
 
         const pairs = outputs
