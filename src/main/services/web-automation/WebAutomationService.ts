@@ -11,57 +11,14 @@ type ResponseType = 'json' | 'binary' | 'base64';
 
 export class WebAutomationService {
 
+    @config({ default: 'https://api.automationcloud.net' }) WEB_AUTOMATION_AC_API_URL!: string;
     @config() WEB_AUTOMATION_AC_SECRET_KEY!: string;
     @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_WEBPAGE!: string;
     @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_PDF!: string;
-    @config({ default: 'https://api.automationcloud.net' }) WEB_AUTOMATION_AC_API_URL!: string;
-
     @config({ default: 120000 }) WEB_AUTOMATION_TIMEOUT_MS!: number;
-    @config({ default: 2000 }) POLL_INTERVAL_MS!: number;
+    @config({ default: 2000 }) WEB_AUTOMATION_POLL_INTERVAL_MS!: number;
 
-    private async executeJob(jobInput: Record<string, any>, serviceId: string): Promise<any> {
-        const job = await this.sendRequest({
-            method: 'POST',
-            path: 'jobs',
-            body: {
-                input: jobInput,
-                serviceId,
-                category: 'live',
-            }
-        });
-
-        let currentJob = job;
-        const startTime = Date.now();
-
-        try {
-            while (currentJob.state !== 'success' && Date.now() - startTime < this.WEB_AUTOMATION_TIMEOUT_MS) {
-                await new Promise(resolve => setTimeout(resolve, this.POLL_INTERVAL_MS));
-
-                currentJob = await this.getJob(job.id);
-
-                if (currentJob.state === 'fail') {
-                    throw this.handleError({
-                        message: `Job failed: ${currentJob.error || 'Unknown error'}`,
-                        code: 'JOB_FAILED',
-                        details: currentJob
-                    });
-                }
-            }
-
-            if (currentJob.state !== 'success') {
-                throw this.handleError({
-                    message: 'Job timed out',
-                    code: 'JOB_TIMEOUT',
-                    details: currentJob
-                });
-            }
-
-            return await this.getJobOutputs(job.id);
-        } catch (error) {
-            this.cancelJob(job.id).catch(() => {});
-            throw error;
-        }
-    }
+    // Modules
 
     async scrapeWebpage(request: ScrapeWebpage): Promise<ScrapeResponse> {
         const jobOutputs = await this.executeJob({
@@ -116,6 +73,50 @@ export class WebAutomationService {
         }
 
         return await res.json();
+    }
+
+    private async executeJob(jobInput: Record<string, any>, serviceId: string): Promise<any> {
+        const job = await this.sendRequest({
+            method: 'POST',
+            path: 'jobs',
+            body: {
+                input: jobInput,
+                serviceId,
+                category: 'live',
+            }
+        });
+
+        let currentJob = job;
+        const startTime = Date.now();
+
+        try {
+            while (currentJob.state !== 'success' && Date.now() - startTime < this.WEB_AUTOMATION_TIMEOUT_MS) {
+                await new Promise(resolve => setTimeout(resolve, this.WEB_AUTOMATION_POLL_INTERVAL_MS));
+
+                currentJob = await this.getJob(job.id);
+
+                if (currentJob.state === 'fail') {
+                    throw this.handleError({
+                        message: `Job failed: ${currentJob.error || 'Unknown error'}`,
+                        code: 'JOB_FAILED',
+                        details: currentJob
+                    });
+                }
+            }
+
+            if (currentJob.state !== 'success') {
+                throw this.handleError({
+                    message: 'Job timed out',
+                    code: 'JOB_TIMEOUT',
+                    details: currentJob
+                });
+            }
+
+            return await this.getJobOutputs(job.id);
+        } catch (error) {
+            this.cancelJob(job.id).catch(() => {});
+            throw error;
+        }
     }
 
     private async getJob(jobId: string) {
