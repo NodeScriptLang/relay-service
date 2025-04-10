@@ -4,7 +4,7 @@ import { Cookie, CookieSchema } from './Cookie.js';
 import { WebLink, WebLinkSchema } from './WebLink.js';
 
 export interface ScrapeResponse {
-    input: string;
+    inputUrl: string;
     url: string;
     title: string;
     text: string;
@@ -15,12 +15,13 @@ export interface ScrapeResponse {
     allImages: string[];
     links: WebLink[];
     cookies: Cookie[];
+    screenshots?: string[];
 }
 
 export const ScrapeResponseSchema = new Schema<ScrapeResponse>({
     type: 'object',
     properties: {
-        input: { type: 'string' },
+        inputUrl: { type: 'string' },
         url: { type: 'string' },
         title: { type: 'string' },
         text: { type: 'string' },
@@ -43,5 +44,10 @@ export const ScrapeResponseSchema = new Schema<ScrapeResponse>({
             type: 'array',
             items: CookieSchema.schema
         },
+        screenshots: {
+            type: 'array',
+            items: { type: 'string' },
+            optional: true
+        }
     },
 });

@@ -7,6 +7,8 @@ export interface AutomationCloudRequest {
     body?: Record<string, any>;
 }
 
+type ResponseType = 'json' | 'binary' | 'base64';
+
 export class WebAutomationService {
 
     @config() WEB_AUTOMATION_AC_SECRET_KEY!: string;
@@ -15,7 +17,7 @@ export class WebAutomationService {
     @config() WEB_AUTOMATION_AC_ORGANISATION_ID!: string;
     @config({ default: 'https://api.automationcloud.net' }) WEB_AUTOMATION_AC_API_URL!: string;
 
-    @config({ default: 60 }) MAX_POLL_ATTEMPTS!: number;
+    @config({ default: 120000 }) WEB_AUTOMATION_TIMEOUT_MS!: number;
     @config({ default: 2000 }) POLL_INTERVAL_MS!: number;
 
     private async executeJob(jobInput: Record<string, any>, serviceId: string): Promise<any> {
@@ -30,14 +32,13 @@ export class WebAutomationService {
         });
 
         let currentJob = job;
-        let attempts = 0;
+        const startTime = Date.now();
 
         try {
-            while (currentJob.state !== 'success' && attempts < this.MAX_POLL_ATTEMPTS) {
+            while (currentJob.state !== 'success' && Date.now() - startTime < this.WEB_AUTOMATION_TIMEOUT_MS) {
                 await new Promise(resolve => setTimeout(resolve, this.POLL_INTERVAL_MS));
 
                 currentJob = await this.getJob(job.id);
-                attempts++;
 
                 if (currentJob.state === 'fail') {
                     throw this.handleError({
@@ -87,7 +88,7 @@ export class WebAutomationService {
 
     // Helpers
 
-    private async sendRequest(request: AutomationCloudRequest) {
+    private async sendRequest(request: AutomationCloudRequest, responseType: ResponseType = 'json') {
         const res = await fetch(`${this.WEB_AUTOMATION_AC_API_URL}/${request.path}`, {
             method: request.method,
             headers: {
@@ -102,7 +103,22 @@ export class WebAutomationService {
                 }) } :
                 {})
         });
-        return await res.json(); ;
+
+        if (responseType === 'binary') {
+            return await res.blob();
+        }
+
+        if (responseType === 'base64') {
+            const arrayBuffer = await res.arrayBuffer();
+            const bytes = new Uint8Array(arrayBuffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+        }
+
+        return await res.json();
     }
 
     private async getJob(jobId: string) {
@@ -121,7 +137,7 @@ export class WebAutomationService {
         return res;
     }
 
-    async cancelJob(jobId: string) {
+    private async cancelJob(jobId: string) {
         return this.sendRequest({
             method: 'POST',
             path: `jobs/${jobId}/cancel`
@@ -137,7 +153,7 @@ export class WebAutomationService {
         const result = Object.fromEntries(pairs);
 
         return {
-            input: result.inputUrl || '',
+            inputUrl: result.inputUrl || '',
             url: result.url || '',
             title: result.title || '',
             text: result.text || '',

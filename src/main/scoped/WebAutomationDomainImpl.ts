@@ -14,7 +14,7 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
 
     @config({ default: 0.00029 }) WEB_AUTOMATION_PRICE_PER_CREDIT!: number;
 
-    @config({ default: 120 }) WEB_AUTOMATION_RATE_LIMIT!: number;
+    @config({ default: 600 }) WEB_AUTOMATION_CACHE_RATE_LIMIT_WINDOW_SECONDS!: number;
     @config({ default: HOUR_SECONDS }) WEB_AUTOMATION_RATE_LIMIT_TTL_SECONDS!: number;
 
     @dep() private logger!: Logger;
@@ -31,7 +31,7 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
 
             const response = await this.webAutomationService.scrapeWebpage(req.request);
             this.logger.info('WebAutomationDomainImpl scrapeWebpage', { url });
-            const cost = 1; // TODO - cvs - add cost
+            const cost = 0.0001; // TODO - cvs - add cost
             const millicredits = calculateMillicredits(cost, this.WEB_AUTOMATION_PRICE_PER_CREDIT);
             const skuId = 'webAutomation:scrapeWebpage';
             const skuName = 'Web Automation Scrape Webpage';
@@ -72,7 +72,7 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
         if (currentCount === 1) {
             await this.redis.client.expire(key, this.WEB_AUTOMATION_RATE_LIMIT_TTL_SECONDS);
         }
-        if (currentCount > this.WEB_AUTOMATION_RATE_LIMIT) {
+        if (currentCount > this.WEB_AUTOMATION_CACHE_RATE_LIMIT_WINDOW_SECONDS) {
             throw new RateLimitExceededError();
         }
     }
