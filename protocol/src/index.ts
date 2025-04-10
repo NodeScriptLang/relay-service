@@ -1,4 +1,5 @@
 export * from './domains/LlmDomain.js';
+export * from './domains/WebAutomationDomain.js';
 export * from './protocol.js';
 export * from './schema/llm/LlmCompleteResponse.js';
 export * from './schema/llm/LlmGenerateImage.js';
@@ -7,3 +8,8 @@ export * from './schema/llm/LlmGenerateText.js';
 export * from './schema/llm/LlmImageModelParams.js';
 export * from './schema/llm/LlmModelType.js';
 export * from './schema/llm/LlmTextModelParams.js';
+export * from './schema/web-automation/Cookie.js';
+export * from './schema/web-automation/ScrapePdf.js';
+export * from './schema/web-automation/ScrapeResponse.js';
+export * from './schema/web-automation/ScrapeWebpage.js';
+export * from './schema/web-automation/WebLink.js';
