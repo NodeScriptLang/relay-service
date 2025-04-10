@@ -13,7 +13,6 @@ import { NodeScriptApi } from './NodeScriptApi.js';
 export class WebAutomationDomainImpl implements WebAutomationDomain {
 
     @config({ default: 0.00029 }) WEB_AUTOMATION_PRICE_PER_CREDIT!: number;
-
     @config({ default: 600 }) WEB_AUTOMATION_CACHE_RATE_LIMIT_WINDOW_SECONDS!: number;
     @config({ default: HOUR_SECONDS }) WEB_AUTOMATION_RATE_LIMIT_TTL_SECONDS!: number;
 
