@@ -15,8 +15,6 @@ export class WebAutomationService {
     @config() WEB_AUTOMATION_AC_SERVICE_ID!: string;
     @config() WEB_AUTOMATION_AC_ORGANISATION_ID!: string;
     @config({ default: 'https://api.automationcloud.net' }) WEB_AUTOMATION_AC_API_URL!: string;
-
-    @config({ default: 'https://oy3g8kxt.run.nodescript.dev/api/view-screenshot?id=' }) SCREENSHOT_VIEW_URL!: string;
     @config({ default: 60 }) MAX_POLL_ATTEMPTS!: number;
     @config({ default: 2000 }) POLL_INTERVAL_MS!: number;
 
