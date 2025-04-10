@@ -31,7 +31,7 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
 
             const res = await this.webAutomationService.scrapeWebpage(req.request);
             this.logger.info('WebAutomationDomainImpl scrapeWebpage', { url });
-            const cost = 1; // TODO - cvs - add cost
+            const cost = 0.0001; // TODO - cvs - add cost
             const millicredits = calculateMillicredits(cost, this.WEB_AUTOMATION_PRICE_PER_CREDIT);
             const skuId = 'webAutomation:scrapeWebpage';
             const skuName = 'Web Automation Scrape Webpage';

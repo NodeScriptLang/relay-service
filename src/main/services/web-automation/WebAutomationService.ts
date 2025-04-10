@@ -7,6 +7,8 @@ export interface AutomationCloudRequest {
     body?: Record<string, any>;
 }
 
+type ResponseType = 'json' | 'binary' | 'base64';
+
 export class WebAutomationService {
 
     @config() WEB_AUTOMATION_AC_SECRET_KEY!: string;
@@ -61,14 +63,22 @@ export class WebAutomationService {
             }
 
             const jobOutputs = await this.getJobOutputs(job.id);
-            return this.parseJobOutputs(jobOutputs);
+            const screenshots = await this.getJobScreenshots(job.id);
+            const parsed = this.parseJobOutputs(jobOutputs);
+            if (request.outputScreenshots) {
+                return {
+                    ...parsed,
+                    screenshots
+                };
+            }
+            return parsed;
         } catch (error) {
             this.cancelJob(job.id);
             throw error;
         }
     }
 
-    private async sendRequest(request: AutomationCloudRequest) {
+    private async sendRequest(request: AutomationCloudRequest, responseType: ResponseType = 'json') {
         const res = await fetch(`${this.WEB_AUTOMATION_AC_API_URL}/${request.path}`, {
             method: request.method,
             headers: {
@@ -83,7 +93,22 @@ export class WebAutomationService {
                 }) } :
                 {})
         });
-        return await res.json(); ;
+
+        if (responseType === 'binary') {
+            return await res.blob();
+        }
+
+        if (responseType === 'base64') {
+            const arrayBuffer = await res.arrayBuffer();
+            const bytes = new Uint8Array(arrayBuffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+        }
+
+        return await res.json();
     }
 
     private async getJob(jobId: string) {
@@ -102,11 +127,38 @@ export class WebAutomationService {
         return res;
     }
 
-    async cancelJob(jobId: string) {
+    private async cancelJob(jobId: string) {
         return this.sendRequest({
             method: 'POST',
             path: `jobs/${jobId}/cancel`
         });
+    }
+
+    private async getJobScreenshots(jobId: string): Promise<string[]> {
+        const screenshots = await this.sendRequest({
+            method: 'GET',
+            path: `jobs/${jobId}/screenshots`,
+        });
+
+        if (!screenshots || !screenshots.data) {
+            return [];
+        }
+
+        const base64Screenshots = await Promise.all(
+            screenshots.data.map(async (screenshot: Record<string, any>) => {
+                try {
+                    return await this.sendRequest({
+                        method: 'GET',
+                        path: `jobs/${jobId}/screenshots/${screenshot.id}`,
+                    }, 'base64');
+                } catch (error) {
+                    console.error('Failed to fetch screenshot:', error);
+                    return null;
+                }
+            })
+        );
+
+        return base64Screenshots.filter(Boolean) as string[];
     }
 
     private parseJobOutputs(jobOutput: any): ScrapeWebpageResponse {

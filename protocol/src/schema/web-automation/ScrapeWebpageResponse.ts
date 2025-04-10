@@ -15,6 +15,7 @@ export interface ScrapeWebpageResponse {
     allImages: string[];
     links: WebLink[];
     cookies: Cookie[];
+    screenshots?: string[];
 }
 
 export const ScrapeWebpageResponseSchema = new Schema<ScrapeWebpageResponse>({
@@ -43,5 +44,10 @@ export const ScrapeWebpageResponseSchema = new Schema<ScrapeWebpageResponse>({
             type: 'array',
             items: CookieSchema.schema
         },
+        screenshots: {
+            type: 'array',
+            items: { type: 'string' },
+            optional: true
+        }
     },
 });
