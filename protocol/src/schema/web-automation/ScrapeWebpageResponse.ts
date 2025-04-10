@@ -4,7 +4,7 @@ import { Cookie, CookieSchema } from './Cookie.js';
 import { WebLink, WebLinkSchema } from './WebLink.js';
 
 export interface ScrapeWebpageResponse {
-    input: string;
+    inputUrl: string;
     url: string;
     title: string;
     text: string;
@@ -21,7 +21,7 @@ export interface ScrapeWebpageResponse {
 export const ScrapeWebpageResponseSchema = new Schema<ScrapeWebpageResponse>({
     type: 'object',
     properties: {
-        input: { type: 'string' },
+        inputUrl: { type: 'string' },
         url: { type: 'string' },
         title: { type: 'string' },
         text: { type: 'string' },

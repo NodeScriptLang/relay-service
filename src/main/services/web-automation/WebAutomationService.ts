@@ -15,7 +15,8 @@ export class WebAutomationService {
     @config() WEB_AUTOMATION_AC_SERVICE_ID!: string;
     @config() WEB_AUTOMATION_AC_ORGANISATION_ID!: string;
     @config({ default: 'https://api.automationcloud.net' }) WEB_AUTOMATION_AC_API_URL!: string;
-    @config({ default: 60 }) MAX_POLL_ATTEMPTS!: number;
+
+    @config({ default: 120000 }) WEB_AUTOMATION_TIMEOUT_MS!: number;
     @config({ default: 2000 }) POLL_INTERVAL_MS!: number;
 
     async scrapeWebpage(request: ScrapeWebpage): Promise<ScrapeWebpageResponse> {
@@ -36,14 +37,13 @@ export class WebAutomationService {
         });
 
         let currentJob = job;
-        let attempts = 0;
+        const startTime = Date.now();
 
         try {
-            while (currentJob.state !== 'success' && attempts < this.MAX_POLL_ATTEMPTS) {
+            while (currentJob.state !== 'success' && Date.now() - startTime < this.WEB_AUTOMATION_TIMEOUT_MS) {
                 await new Promise(resolve => setTimeout(resolve, this.POLL_INTERVAL_MS));
 
                 currentJob = await this.getJob(job.id);
-                attempts++;
 
                 if (currentJob.state === 'fail') {
                     throw this.handleError({
@@ -170,7 +170,7 @@ export class WebAutomationService {
         const result = Object.fromEntries(pairs);
 
         return {
-            input: result.inputUrl || '',
+            inputUrl: result.inputUrl || '',
             url: result.url || '',
             title: result.title || '',
             text: result.text || '',
