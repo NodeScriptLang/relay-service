@@ -12,7 +12,6 @@ export interface ScrapeResponse {
     parsedJson: Array<Record<string, any>>;
     html: string;
     images: string[];
-    allImages: string[];
     links: WebLink[];
     cookies: Cookie[];
     screenshots?: string[];
@@ -29,10 +28,6 @@ export const ScrapeResponseSchema = new Schema<ScrapeResponse>({
         parsedJson: { type: 'any' },
         html: { type: 'string' },
         images: {
-            type: 'array',
-            items: { type: 'string' }
-        },
-        allImages: {
             type: 'array',
             items: { type: 'string' }
         },

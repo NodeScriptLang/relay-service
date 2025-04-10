@@ -14,7 +14,6 @@ export class WebAutomationService {
     @config() WEB_AUTOMATION_AC_SECRET_KEY!: string;
     @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_WEBPAGE!: string;
     @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_PDF!: string;
-    @config() WEB_AUTOMATION_AC_ORGANISATION_ID!: string;
     @config({ default: 'https://api.automationcloud.net' }) WEB_AUTOMATION_AC_API_URL!: string;
 
     @config({ default: 120000 }) WEB_AUTOMATION_TIMEOUT_MS!: number;
@@ -92,10 +91,8 @@ export class WebAutomationService {
         const res = await fetch(`${this.WEB_AUTOMATION_AC_API_URL}/${request.path}`, {
             method: request.method,
             headers: {
-                'Authorization': `Bearer ${this.WEB_AUTOMATION_AC_SECRET_KEY}`,
-                'Content-Type': 'application/json',
-                'x-ubio-organisation-id': this.WEB_AUTOMATION_AC_ORGANISATION_ID,
-                'x-ubio-client-id': '',
+                'Authorization': `Basic ${btoa(`${this.WEB_AUTOMATION_AC_SECRET_KEY}:`)}`,
+                'Content-Type': 'application/json'
             },
             ...(request.body ?
                 { body: JSON.stringify({
@@ -161,7 +158,6 @@ export class WebAutomationService {
             parsedJson: result.parsedJson || [],
             html: result.html || '',
             images: Array.isArray(result.images) ? result.images : [],
-            allImages: Array.isArray(result.allImages) ? result.allImages : [],
             links: Array.isArray(result.links) ? result.links : [],
             cookies: Array.isArray(result.cookies) ? result.cookies : []
         };
