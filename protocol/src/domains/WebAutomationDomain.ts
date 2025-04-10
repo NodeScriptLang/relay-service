@@ -1,14 +1,23 @@
 import { DomainDef } from '@nodescript/protocomm';
 
+import { ScrapePdf, ScrapePdfSchema } from '../schema/web-automation/ScrapePdf.js';
+import { ScrapeResponse, ScrapeResponseSchema } from '../schema/web-automation/ScrapeResponse.js';
 import { ScrapeWebpage, ScrapeWebpageSchema } from '../schema/web-automation/ScrapeWebpage.js';
-import { ScrapeWebpageResponse, ScrapeWebpageResponseSchema } from '../schema/web-automation/ScrapeWebpageResponse.js';
 
 export interface WebAutomationDomain {
+
     scrapeWebpage(req: {
         request: ScrapeWebpage;
     }): Promise<{
-        response: ScrapeWebpageResponse;
+        response: ScrapeResponse;
     }>;
+
+    scrapePdf(req: {
+        request: ScrapePdf;
+    }): Promise<{
+        response: string;
+    }>;
+
 }
 
 export const WebAutomationDomain: DomainDef<WebAutomationDomain> = {
@@ -20,7 +29,16 @@ export const WebAutomationDomain: DomainDef<WebAutomationDomain> = {
                 request: ScrapeWebpageSchema.schema,
             },
             returns: {
-                response: ScrapeWebpageResponseSchema.schema,
+                response: ScrapeResponseSchema.schema,
+            },
+        },
+        scrapePdf: {
+            type: 'command',
+            params: {
+                request: ScrapePdfSchema.schema,
+            },
+            returns: {
+                response: { type: 'string' },
             },
         },
     },

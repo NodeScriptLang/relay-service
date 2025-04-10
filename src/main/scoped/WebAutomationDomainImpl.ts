@@ -1,6 +1,6 @@
 import { RateLimitExceededError } from '@nodescript/errors';
 import { Logger } from '@nodescript/logger';
-import { ScrapeWebpage, ScrapeWebpageResponse, WebAutomationDomain } from '@nodescript/relay-protocol';
+import { ScrapePdf, ScrapeResponse, ScrapeWebpage, WebAutomationDomain } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
@@ -22,23 +22,44 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
     @dep() private redis!: RedisManager;
     @dep() private webAutomationService!: WebAutomationService;
 
-    async scrapeWebpage(req: { request: ScrapeWebpage }): Promise<{ response: ScrapeWebpageResponse }> {
+    async scrapeWebpage(req: { request: ScrapeWebpage }): Promise<{ response: ScrapeResponse }> {
         const { url } = req.request;
 
         try {
             const workspaceId = await this.nsApi.getWorkspaceId();
             await this.handleRateLimit(workspaceId);
 
-            const res = await this.webAutomationService.scrapeWebpage(req.request);
+            const response = await this.webAutomationService.scrapeWebpage(req.request);
             this.logger.info('WebAutomationDomainImpl scrapeWebpage', { url });
             const cost = 0.0001; // TODO - cvs - add cost
             const millicredits = calculateMillicredits(cost, this.WEB_AUTOMATION_PRICE_PER_CREDIT);
             const skuId = 'webAutomation:scrapeWebpage';
             const skuName = 'Web Automation Scrape Webpage';
             await this.nsApi.addUsage(millicredits, skuId, skuName, 200);
-            return { response: res };
+            return { response };
         } catch (error) {
             this.logger.error('WebAutomationDomainImpl scrapeWebpage', { url, error });
+            throw error;
+        }
+    }
+
+    async scrapePdf(req: { request: ScrapePdf }): Promise<{ response: string }> {
+        const { url } = req.request;
+
+        try {
+            const workspaceId = await this.nsApi.getWorkspaceId();
+            await this.handleRateLimit(workspaceId);
+
+            const response = await this.webAutomationService.scrapePdf(req.request);
+            this.logger.info('WebAutomationDomainImpl scrapePdf', { url });
+            const cost = 1; // TODO - cvs - add cost
+            const millicredits = calculateMillicredits(cost, this.WEB_AUTOMATION_PRICE_PER_CREDIT);
+            const skuId = 'webAutomation:scrapePdf';
+            const skuName = 'Web Automation Scrape Pdf';
+            await this.nsApi.addUsage(millicredits, skuId, skuName, 200);
+            return { response };
+        } catch (error) {
+            this.logger.error('WebAutomationDomainImpl scrapePdf', { url, error });
             throw error;
         }
     }
