@@ -30,7 +30,7 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
 
             const response = await this.webAutomationService.scrapeWebpage(req.request);
             this.logger.info('WebAutomationDomainImpl scrapeWebpage', { url });
-            const cost = 0.0001; // TODO review cost
+            const cost = 0.00001; // TODO review cost
             const millicredits = calculateMillicredits(cost, this.WEB_AUTOMATION_PRICE_PER_CREDIT);
             const skuId = 'webAutomation:scrapeWebpage';
             const skuName = 'Web Automation Scrape Webpage';
@@ -51,7 +51,7 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
 
             const response = await this.webAutomationService.scrapePdf(req.request);
             this.logger.info('WebAutomationDomainImpl scrapePdf', { url });
-            const cost = 0.0001; // TODO review cost
+            const cost = 0.00001; // TODO review cost
             const millicredits = calculateMillicredits(cost, this.WEB_AUTOMATION_PRICE_PER_CREDIT);
             const skuId = 'webAutomation:scrapePdf';
             const skuName = 'Web Automation Scrape Pdf';
