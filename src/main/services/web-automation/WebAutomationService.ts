@@ -21,25 +21,23 @@ export class WebAutomationService {
     // Modules
 
     async scrapeWebpage(request: ScrapeWebpage): Promise<ScrapeResponse> {
-        const jobOutputs = await this.executeJob({
+        return await this.executeJob({
             url: request.url,
             proxyUrl: request.proxyUrl,
             javascript: request.javascript,
             sleep: request.sleep,
             cookies: request.cookies,
         }, this.WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_WEBPAGE);
-        return this.parseJobOutputs(jobOutputs);
     }
 
     async scrapePdf(request: ScrapePdf): Promise<string> {
         const jobOutputs = await this.executeJob({
             url: request.url,
         }, this.WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_PDF);
-        const parsed = this.parseJobOutputs(jobOutputs);
         if (request.responseFormat === 'text') {
-            return parsed.text;
+            return jobOutputs.text;
         }
-        return parsed.markdown;
+        return jobOutputs.markdown;
     }
 
     // Helpers
@@ -111,8 +109,16 @@ export class WebAutomationService {
                     details: currentJob
                 });
             }
-
-            return await this.getJobOutputs(job.id);
+            const jobOutputs = await this.getJobOutputs(job.id);
+            const parsed = this.parseJobOutputs(jobOutputs);
+            const screenshots = await this.getJobScreenshots(job.id);
+            if (screenshots) {
+                return {
+                    ...parsed,
+                    screenshots
+                };
+            }
+            return parsed;
         } catch (error) {
             this.cancelJob(job.id).catch(() => {});
             throw error;
@@ -127,19 +133,19 @@ export class WebAutomationService {
         return res;
     }
 
+    private async cancelJob(jobId: string) {
+        return this.sendRequest({
+            method: 'POST',
+            path: `jobs/${jobId}/cancel`
+        });
+    }
+
     private async getJobOutputs(jobId: string): Promise<Array<Record<string, any>>> {
         const res = await this.sendRequest({
             method: 'GET',
             path: `jobs/${jobId}/outputs`
         });
         return res;
-    }
-
-    private async cancelJob(jobId: string) {
-        return this.sendRequest({
-            method: 'POST',
-            path: `jobs/${jobId}/cancel`
-        });
     }
 
     private parseJobOutputs(jobOutput: any): ScrapeResponse {
@@ -162,6 +168,33 @@ export class WebAutomationService {
             links: Array.isArray(result.links) ? result.links : [],
             cookies: Array.isArray(result.cookies) ? result.cookies : []
         };
+    }
+
+    private async getJobScreenshots(jobId: string): Promise<string[]> {
+        const screenshots = await this.sendRequest({
+            method: 'GET',
+            path: `jobs/${jobId}/screenshots`,
+        });
+
+        if (!screenshots || !screenshots.data) {
+            return [];
+        }
+
+        const base64Screenshots = await Promise.all(
+            screenshots.data.map(async (screenshot: Record<string, any>) => {
+                try {
+                    return await this.sendRequest({
+                        method: 'GET',
+                        path: `jobs/${jobId}/screenshots/${screenshot.id}`,
+                    }, 'base64');
+                } catch (error) {
+                    console.error('Failed to fetch screenshot:', error);
+                    return null;
+                }
+            })
+        );
+
+        return base64Screenshots.filter(Boolean) as string[];
     }
 
     handleError(error: any): Error {
