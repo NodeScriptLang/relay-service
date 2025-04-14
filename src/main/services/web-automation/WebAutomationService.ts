@@ -1,4 +1,4 @@
-import { ScrapePdf, ScrapeResponse, ScrapeWebpage } from '@nodescript/relay-protocol';
+import { ScrapePdf, ScrapePlaywright, ScrapeResponse, ScrapeWebpage } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 
 export interface AutomationCloudRequest {
@@ -15,6 +15,7 @@ export class WebAutomationService {
     @config() WEB_AUTOMATION_AC_SECRET_KEY!: string;
     @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_WEBPAGE!: string;
     @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_PDF!: string;
+    @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_PLAYWRIGHT!: string;
     @config({ default: 120000 }) WEB_AUTOMATION_TIMEOUT_MS!: number;
     @config({ default: 2000 }) WEB_AUTOMATION_POLL_INTERVAL_MS!: number;
 
@@ -38,6 +39,14 @@ export class WebAutomationService {
             return jobOutputs.text;
         }
         return jobOutputs.markdown;
+    }
+
+    async scrapePlaywright(request: ScrapePlaywright): Promise<ScrapeResponse> {
+        const playwrightScript = `const page = await ctx.$browser.fetchCurrentPlaywrightPage();${request.script}`;
+        return await this.executeJob({
+            url: request.url,
+            playwrightScript,
+        }, this.WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_PLAYWRIGHT);
     }
 
     // Helpers

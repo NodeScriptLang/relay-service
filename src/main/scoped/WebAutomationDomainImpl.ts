@@ -1,6 +1,6 @@
 import { RateLimitExceededError } from '@nodescript/errors';
 import { Logger } from '@nodescript/logger';
-import { ScrapePdf, ScrapeResponse, ScrapeWebpage, WebAutomationDomain } from '@nodescript/relay-protocol';
+import { ScrapePdf, ScrapePlaywright, ScrapeResponse, ScrapeWebpage, WebAutomationDomain } from '@nodescript/relay-protocol';
 import { config } from 'mesh-config';
 import { dep } from 'mesh-ioc';
 
@@ -59,6 +59,27 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
             return { response };
         } catch (error) {
             this.logger.error('WebAutomationDomainImpl scrapePdf', { url, error });
+            throw error;
+        }
+    }
+
+    async scrapePlaywright(req: { request: ScrapePlaywright }): Promise<{ response: ScrapeResponse }> {
+        const { url } = req.request;
+
+        try {
+            const workspaceId = await this.nsApi.getWorkspaceId();
+            await this.handleRateLimit(workspaceId);
+
+            const response = await this.webAutomationService.scrapePlaywright(req.request);
+            this.logger.info('WebAutomationDomainImpl scrapePlaywright', { url });
+            const cost = 0.00001; // TODO review cost
+            const millicredits = calculateMillicredits(cost, this.WEB_AUTOMATION_PRICE_PER_CREDIT);
+            const skuId = 'webAutomation:scrapePlaywright';
+            const skuName = 'Web Automation Scrape Playwright';
+            await this.nsApi.addUsage(millicredits, skuId, skuName, 200);
+            return { response };
+        } catch (error) {
+            this.logger.error('WebAutomationDomainImpl scrapePlaywright', { url, error });
             throw error;
         }
     }

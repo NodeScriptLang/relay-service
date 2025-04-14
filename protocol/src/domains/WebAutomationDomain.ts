@@ -1,6 +1,7 @@
 import { DomainDef } from '@nodescript/protocomm';
 
 import { ScrapePdf, ScrapePdfSchema } from '../schema/web-automation/ScrapePdf.js';
+import { ScrapePlaywright, ScrapePlaywrightSchema } from '../schema/web-automation/ScrapePlaywright.js';
 import { ScrapeResponse, ScrapeResponseSchema } from '../schema/web-automation/ScrapeResponse.js';
 import { ScrapeWebpage, ScrapeWebpageSchema } from '../schema/web-automation/ScrapeWebpage.js';
 
@@ -16,6 +17,12 @@ export interface WebAutomationDomain {
         request: ScrapePdf;
     }): Promise<{
         response: string;
+    }>;
+
+    scrapePlaywright(req: {
+        request: ScrapePlaywright;
+    }): Promise<{
+        response: ScrapeResponse;
     }>;
 
 }
@@ -39,6 +46,15 @@ export const WebAutomationDomain: DomainDef<WebAutomationDomain> = {
             },
             returns: {
                 response: { type: 'string' },
+            },
+        },
+        scrapePlaywright: {
+            type: 'command',
+            params: {
+                request: ScrapePlaywrightSchema.schema,
+            },
+            returns: {
+                response: ScrapeResponseSchema.schema,
             },
         },
     },
