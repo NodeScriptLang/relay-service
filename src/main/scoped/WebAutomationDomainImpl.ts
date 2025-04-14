@@ -85,6 +85,11 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
     }
 
     private async handleRateLimit(workspaceId: string) {
+        const workspace = await this.nsApi.getWorkspace(workspaceId);
+        let rateLimit = this.WEB_AUTOMATION_CACHE_RATE_LIMIT_WINDOW_SECONDS;
+        if (workspace.metadata.relayServiceWebAutomationRateLimit) {
+            rateLimit = workspace.metadata.relayServiceWebAutomationRateLimit;
+        }
         const date = getDate();
         const hour = getHour();
         const key = `Relay:llm:rateLimit:${workspaceId}:${date}:${hour}`;
@@ -92,7 +97,7 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
         if (currentCount === 1) {
             await this.redis.client.expire(key, this.WEB_AUTOMATION_RATE_LIMIT_TTL_SECONDS);
         }
-        if (currentCount > this.WEB_AUTOMATION_CACHE_RATE_LIMIT_WINDOW_SECONDS) {
+        if (currentCount > rateLimit) {
             throw new RateLimitExceededError();
         }
     }
