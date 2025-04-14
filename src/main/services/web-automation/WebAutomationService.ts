@@ -13,7 +13,6 @@ export class WebAutomationService {
 
     @config({ default: 'https://api.automationcloud.net' }) WEB_AUTOMATION_AC_API_URL!: string;
     @config() WEB_AUTOMATION_AC_SECRET_KEY!: string;
-    // TODO - refactor serviceIds to be passed in as params to request
     @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_WEBPAGE!: string;
     @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_PDF!: string;
     @config() WEB_AUTOMATION_AC_SERVICE_ID_SCRAPE_PLAYWRIGHT!: string;
