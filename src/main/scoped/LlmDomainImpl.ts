@@ -21,7 +21,7 @@ export class LlmDomainImpl implements LlmDomain {
 
     @config() LLM_PRICE_PER_CREDIT!: number;
 
-    @config({ default: 120 }) LLM_RATE_LIMIT!: number;
+    @config({ default: 500 }) LLM_RATE_LIMIT!: number;
     @config({ default: HOUR_SECONDS }) LLM_RATE_LIMIT_TTL_SECONDS!: number;
 
     @dep() private logger!: Logger;
