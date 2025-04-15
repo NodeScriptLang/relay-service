@@ -1,4 +1,4 @@
-import { ApiProtocol, apiProtocol, UsageLabels } from '@nodescript/api-proto';
+import { ApiProtocol, apiProtocol, UsageLabels, Workspace } from '@nodescript/api-proto';
 import { HttpContext } from '@nodescript/http-server';
 import { Logger } from '@nodescript/logger';
 import { createHttpClient } from '@nodescript/protocomm';
@@ -22,6 +22,12 @@ export class NodeScriptApi {
             throw new Error('Invalid token');
         }
         return token.workspaceId;
+    }
+
+    async getWorkspace(workspaceId: string): Promise<Workspace> {
+        const client = this.createClient();
+        const { workspace } = await client.Workspace.getWorkspaceById({ id: workspaceId });
+        return workspace;
     }
 
     async addUsage(millicredits: number, skuId: string, skuName: string, status: number): Promise<void> {

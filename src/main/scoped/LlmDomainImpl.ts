@@ -174,6 +174,11 @@ export class LlmDomainImpl implements LlmDomain {
     }
 
     private async handleRateLimit(workspaceId: string) {
+        const workspace = await this.nsApi.getWorkspace(workspaceId);
+        let rateLimit = this.LLM_RATE_LIMIT;
+        if (workspace.metadata.llmRateLimit) {
+            rateLimit = workspace.metadata.llmRateLimit;
+        }
         const date = getDate();
         const hour = getHour();
         const key = `Relay:llm:rateLimit:${workspaceId}:${date}:${hour}`;
@@ -181,7 +186,7 @@ export class LlmDomainImpl implements LlmDomain {
         if (currentCount === 1) {
             await this.redis.client.expire(key, this.LLM_RATE_LIMIT_TTL_SECONDS);
         }
-        if (currentCount > this.LLM_RATE_LIMIT) {
+        if (currentCount > rateLimit) {
             throw new RateLimitExceededError();
         }
     }
