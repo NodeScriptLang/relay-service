@@ -87,8 +87,8 @@ export class WebAutomationDomainImpl implements WebAutomationDomain {
     private async handleRateLimit(workspaceId: string) {
         const workspace = await this.nsApi.getWorkspace(workspaceId);
         let rateLimit = this.WEB_AUTOMATION_CACHE_RATE_LIMIT_WINDOW_SECONDS;
-        if (workspace.metadata.relayServiceWebAutomationRateLimit) {
-            rateLimit = workspace.metadata.relayServiceWebAutomationRateLimit;
+        if (workspace.metadata.webAutomationRateLimit) {
+            rateLimit = workspace.metadata.webAutomationRateLimit;
         }
         const date = getDate();
         const hour = getHour();

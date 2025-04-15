@@ -176,8 +176,8 @@ export class LlmDomainImpl implements LlmDomain {
     private async handleRateLimit(workspaceId: string) {
         const workspace = await this.nsApi.getWorkspace(workspaceId);
         let rateLimit = this.LLM_RATE_LIMIT;
-        if (workspace.metadata.relayServiceLlmRateLimit) {
-            rateLimit = workspace.metadata.relayServiceLlmRateLimit;
+        if (workspace.metadata.llmRateLimit) {
+            rateLimit = workspace.metadata.llmRateLimit;
         }
         const date = getDate();
         const hour = getHour();
