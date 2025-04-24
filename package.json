@@ -55,7 +55,7 @@
         "@nodescript/api-proto": "^6.15.1",
         "@nodescript/core": "^7.25.2",
         "@nodescript/errors": "^1.2.0",
-        "@nodescript/fetch-undici": "^1.4.6",
+        "@nodescript/fetch-undici": "^1.6.0",
         "@nodescript/http-server": "^2.7.0",
         "@nodescript/logger": "^2.0.6",
         "@nodescript/metrics": "^1.5.0",
