@@ -137,6 +137,60 @@ interface TextModel {
 // For more details on pricing, see: https://groq.com/pricing/
 const models = [
     {
+        id: 'llama-4-scout',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 1.00,
+            output_tokens: 1.50
+        }
+    },
+    {
+        id: 'llama-4-maverick',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 1.50,
+            output_tokens: 2.00
+        }
+    },
+    {
+        id: 'llama-3.1-405b',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 3.00,
+            output_tokens: 3.00
+        }
+    },
+    {
+        id: 'llama-3.1-70b',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.59,
+            output_tokens: 0.79
+        }
+    },
+    {
+        id: 'llama-3.1-8b',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.05,
+            output_tokens: 0.08
+        }
+    },
+    {
+        id: 'kimi-k2',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 1.00,
+            output_tokens: 1.50
+        }
+    },
+    {
         id: 'deepseek-r1-distill-llama-70b',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
