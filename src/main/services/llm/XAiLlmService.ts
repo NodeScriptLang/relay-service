@@ -173,6 +173,42 @@ interface ImageModel {
 // For more details on pricing, see: https://docs.x.ai/docs/models?cluster=us-east-1
 const models = [
     {
+        id: 'grok-4',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            text_input: 5.00,
+            text_output: 15.00
+        }
+    },
+    {
+        id: 'grok-4-heavy',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            text_input: 10.00,
+            text_output: 30.00
+        }
+    },
+    {
+        id: 'grok-3',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            text_input: 3.00,
+            text_output: 12.00
+        }
+    },
+    {
+        id: 'grok-3-mini',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            text_input: 1.00,
+            text_output: 5.00
+        }
+    },
+    {
         id: 'grok-2',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
