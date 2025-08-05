@@ -177,6 +177,101 @@ export class GeminiLlmService extends LlmService {
 // For more details on pricing, see: https://ai.google.dev/gemini-api/docs/pricing
 const models = [
     {
+        id: 'gemini-2.5-flash',
+        tokenDivisor: 1_000_000,
+        modelType: [LlmModelType.TEXT],
+        pricing: {
+            promptTokenCount: {
+                price: 0.075
+            },
+            candidatesTokenCount: {
+                price: 0.60
+            },
+            contextCachingTokenCount: {
+                price: 0.01875
+            },
+            contextCachingStorage: 1.00
+        }
+    },
+    {
+        id: 'gemini-2.5-pro',
+        tokenDivisor: 1_000_000,
+        modelType: [LlmModelType.TEXT],
+        pricing: {
+            promptTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 200000,
+                        price: 1.25
+                    },
+                    {
+                        min_tokens: 200001,
+                        price: 2.50
+                    }
+                ]
+            },
+            candidatesTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 200000,
+                        price: 10.00
+                    },
+                    {
+                        min_tokens: 200001,
+                        price: 15.00
+                    }
+                ]
+            },
+            contextCachingTokenCount: {
+                tiered_pricing: [
+                    {
+                        max_tokens: 200000,
+                        price: 0.3125
+                    },
+                    {
+                        min_tokens: 200001,
+                        price: 0.625
+                    }
+                ]
+            },
+            contextCachingStorage: 4.50
+        }
+    },
+    {
+        id: 'gemini-2.5-flash-lite',
+        tokenDivisor: 1_000_000,
+        modelType: [LlmModelType.TEXT],
+        pricing: {
+            promptTokenCount: {
+                price: 0.10
+            },
+            candidatesTokenCount: {
+                price: 0.40
+            },
+            contextCachingTokenCount: {
+                price: 0.025
+            },
+            contextCachingStorage: 1.00
+        }
+    },
+    {
+        id: 'gemini-2.0-flash-lite',
+        tokenDivisor: 1_000_000,
+        modelType: [LlmModelType.TEXT],
+        pricing: {
+            promptTokenCount: {
+                price: 0.075
+            },
+            candidatesTokenCount: {
+                price: 0.30
+            },
+            contextCachingTokenCount: {
+                price: 0.01875
+            },
+            contextCachingStorage: 1.00
+        }
+    },
+    {
         id: 'gemini-2.0-pro-exp-02-05',
         tokenDivisor: 1_000_000,
         modelType: [LlmModelType.TEXT],
