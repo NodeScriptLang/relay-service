@@ -37,7 +37,9 @@ export class OpenaAiLlmService extends LlmService {
     }
 
     async generateImage(req: LlmGenerateImage): Promise<LlmCompleteResponse> {
+        // console.log('req', req);
         const body = this.formatImageRequestBody(req);
+        // console.log('body', body);
         const res = await this.request('images/generations', 'POST', body);
         const json = await res.json();
         return {
@@ -69,6 +71,30 @@ export class OpenaAiLlmService extends LlmService {
         }
 
         if (model.modelType.includes(LlmModelType.IMAGE)) {
+            // Imagen
+            if (model.id === 'gpt-image-1') {
+                const textInputTokens = json.usage.text_input_tokens || 0;
+                const imageInputTokens = json.usage.image_input_tokens || 0;
+                const imageOutputTokens = json.usage.image_output_tokens || 0;
+
+                if (model.pricing) {
+                    const textInputCost = model.pricing['text_input_tokens'] !== undefined ?
+                        textInputTokens * (model.pricing['text_input_tokens'] / model.tokenDivisor) :
+                        0;
+
+                    const imageInputCost = model.pricing['image_input_tokens'] !== undefined ?
+                        imageInputTokens * (model.pricing['image_input_tokens'] / model.tokenDivisor) :
+                        0;
+
+                    const imageOutputCost = model.pricing['image_output_tokens'] !== undefined ?
+                        imageOutputTokens * (model.pricing['image_output_tokens'] / model.tokenDivisor) :
+                        0;
+
+                    return textInputCost + imageInputCost + imageOutputCost;
+                }
+            }
+
+            // DALL-E
             const size: ImageSize = params.size || '1024x1024';
             const quality: ImageQuality = params.quality || 'standard';
             const count = params.n || 1;
@@ -148,14 +174,29 @@ export class OpenaAiLlmService extends LlmService {
     }
 
     private formatImageRequestBody(req: LlmGenerateImage): Record<string, any> {
-        return {
+        const dallERequest = {
             model: req.model,
             prompt: req.prompt,
             n: req.params?.n,
             size: req.params?.size,
-            style: req.params?.style,
             user: req.params?.user,
-            response_format: req.params?.responseFormat || 'b64_json',
+        };
+
+        if (req.model === 'dall-e-2' || req.model === 'dall-e-3') {
+            return {
+                ...dallERequest,
+            };
+        }
+
+        if (req.model === 'gpt-image-1') {
+            return {
+                model: req.model,
+                prompt: req.prompt,
+            };
+        }
+
+        return {
+            ...dallERequest,
         };
     }
 
@@ -248,6 +289,16 @@ const models = [
             '1024x1024': 0.020,
             '1024x1792': null,
             '1792x1024': null
+        }
+    },
+    {
+        id: 'gpt-image-1',
+        modelType: [LlmModelType.IMAGE],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            text_input_tokens: 5.00,
+            image_input_tokens: 10.00,
+            image_output_tokens: 40.00
         }
     }
 ];
