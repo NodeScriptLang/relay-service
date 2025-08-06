@@ -53,11 +53,19 @@ export class GeminiLlmService extends LlmService {
         };
     }
 
-    calculateCost(modelId: string, json: Record<string, any>): number {
+    calculateCost(modelId: string, json: Record<string, any>, params: Record<string, any> = {}): number {
         const model = models.find(m => m.id === modelId);
         if (!model) {
             throw new Error(`Unsupported model: ${modelId}`);
         }
+
+        // Handle per-image pricing for Imagen models
+        if (model.modelType.includes(LlmModelType.IMAGE) && model.pricing.per_image !== undefined) {
+            const imageCount = params.n || 1;
+            return model.pricing.per_image * imageCount;
+        }
+
+        // Handle token-based pricing for other models
         const promptTokenCount = json.usageMetadata?.promptTokenCount || 0;
         const candidatesTokenCount = json.usageMetadata?.candidatesTokenCount || 0;
         const contextCachingTokenCount = json.usageMetadata?.contextCachingTokenCount || 0;
@@ -435,6 +443,22 @@ const models = [
                 price: 0.025
             },
             contextCachingStorage: 1.00
+        }
+    },
+    {
+        id: 'imagen-3',
+        tokenDivisor: 1,
+        modelType: [LlmModelType.IMAGE],
+        pricing: {
+            per_image: 0.03
+        }
+    },
+    {
+        id: 'imagen-4',
+        tokenDivisor: 1,
+        modelType: [LlmModelType.IMAGE],
+        pricing: {
+            per_image: 0.04
         }
     }
 ];

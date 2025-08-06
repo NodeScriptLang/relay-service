@@ -87,6 +87,17 @@ export class OpenaAiLlmService extends LlmService {
                 const sizePrice = model.pricing[size] || 0;
                 return sizePrice * count;
             }
+            if (model.id === 'gpt-image-1') {
+                // GPT-image-1 uses token-based pricing
+                const imageModel = model as GPTImageModel;
+                const inputTokens = json.usage?.prompt_tokens || 0;
+                const imageTokens = json.usage?.image_tokens || 0;
+
+                const inputCost = inputTokens * (imageModel.pricing.text_input_tokens / model.tokenDivisor);
+                const imageCost = imageTokens * (imageModel.pricing.image_output_tokens / model.tokenDivisor);
+
+                return inputCost + imageCost;
+            }
         }
         return 0;
     }
@@ -172,6 +183,16 @@ interface TextModel {
         input_tokens: number;
         cached_input_tokens: number;
         output_tokens: number;
+    };
+}
+
+interface GPTImageModel {
+    id: string;
+    modelType: LlmModelType[];
+    tokenDivisor: number;
+    pricing: {
+        text_input_tokens: number;
+        image_output_tokens: number;
     };
 }
 
@@ -318,6 +339,15 @@ const models = [
             '1024x1024': 0.020,
             '1024x1792': null,
             '1792x1024': null
+        }
+    },
+    {
+        id: 'gpt-image-1',
+        modelType: [LlmModelType.IMAGE],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            text_input_tokens: 5.00,
+            image_output_tokens: 40.00
         }
     }
 ];
