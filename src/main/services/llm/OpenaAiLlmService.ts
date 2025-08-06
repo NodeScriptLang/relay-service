@@ -218,6 +218,76 @@ const models = [
         }
     },
     {
+        id: 'o1-preview',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 15.00,
+            cached_input_tokens: 7.50,
+            output_tokens: 60.00
+        }
+    },
+    {
+        id: 'o1-mini',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 3.00,
+            cached_input_tokens: 1.50,
+            output_tokens: 12.00
+        }
+    },
+    {
+        id: 'o3',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 15.00,
+            cached_input_tokens: 7.50,
+            output_tokens: 60.00
+        }
+    },
+    {
+        id: 'o4-mini',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 3.00,
+            cached_input_tokens: 1.50,
+            output_tokens: 12.00
+        }
+    },
+    {
+        id: 'gpt-4.1',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 5.00,
+            cached_input_tokens: 2.50,
+            output_tokens: 20.00
+        }
+    },
+    {
+        id: 'gpt-4.1-mini',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.50,
+            cached_input_tokens: 0.25,
+            output_tokens: 2.00
+        }
+    },
+    {
+        id: 'gpt-4.1-nano',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.25,
+            cached_input_tokens: 0.125,
+            output_tokens: 1.00
+        }
+    },
+    {
         id: 'dall-e-3',
         modelType: [LlmModelType.IMAGE],
         tokenDivisor: 1,
