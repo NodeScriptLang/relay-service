@@ -200,15 +200,6 @@ const models = [
         }
     },
     {
-        id: 'deepseek-r1-distill-qwen-32b',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.69,
-            output_tokens: 0.69
-        }
-    },
-    {
         id: 'gemma2-9b-it',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
@@ -224,33 +215,6 @@ const models = [
         pricing: {
             input_tokens: 0.05,
             output_tokens: 0.08
-        }
-    },
-    {
-        id: 'llama-3.2-1b-preview',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.04,
-            output_tokens: 0.04
-        }
-    },
-    {
-        id: 'llama-3.2-3b-preview',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.06,
-            output_tokens: 0.06
-        }
-    },
-    {
-        id: 'llama-3.3-70b-specdec',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.59,
-            output_tokens: 0.99
         }
     },
     {
@@ -280,40 +244,4 @@ const models = [
             output_tokens: 0.08
         }
     },
-    {
-        id: 'mistral-saba-24b',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.79,
-            output_tokens: 0.79
-        }
-    },
-    {
-        id: 'qwen-2.5-32b',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.79,
-            output_tokens: 0.79
-        }
-    },
-    {
-        id: 'qwen-2.5-coder-32b',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.79,
-            output_tokens: 0.79
-        }
-    },
-    {
-        id: 'qwen-qwq-32b',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.29,
-            output_tokens: 0.39
-        }
-    }
 ];
