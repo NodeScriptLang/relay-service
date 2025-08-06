@@ -7,6 +7,7 @@ export class PerplexityLlmService extends LlmService {
 
     @config() LLM_PERPLEXITY_API_KEY!: string;
     @config({ default: 'https://api.perplexity.ai/' }) PERPLEXITY_BASE_URL!: string;
+    @config({ default: 4096 }) DEFAULT_MAX_TOKENS!: number;
 
     getModels() {
         return models;
@@ -117,7 +118,7 @@ export class PerplexityLlmService extends LlmService {
                     content: `${req.prompt}${data ? `: \n\n${data}` : ''}`,
                 }
             ],
-            max_tokens: req.params?.maxTokens,
+            max_tokens: req.params?.maxTokens || this.DEFAULT_MAX_TOKENS,
             temperature: req.params?.temperature,
             top_p: req.params?.topP,
             frequency_penalty: req.params?.frequencyPenalty,

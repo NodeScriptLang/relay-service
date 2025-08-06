@@ -7,7 +7,7 @@ export class AnthropicLlmService extends LlmService {
 
     @config() LLM_ANTHROPIC_API_KEY!: string;
     @config({ default: 'https://api.anthropic.com/v1/' }) ANTHROPIC_BASE_URL!: string;
-    @config({ default: 1024 }) DEFAULT_MAX_TOKENS!: number;
+    @config({ default: 4096 }) DEFAULT_MAX_TOKENS!: number;
 
     getModels() {
         return models;
@@ -96,6 +96,10 @@ export class AnthropicLlmService extends LlmService {
         if ('data' in req) {
             data = JSON.stringify(req.data);
         }
+
+        const model = models.find(m => m.id === req.model);
+        const maxTokens = req.params?.maxTokens || model?.maxOutputTokens || this.DEFAULT_MAX_TOKENS;
+
         return {
             model: req.model,
             messages: [
@@ -110,7 +114,7 @@ export class AnthropicLlmService extends LlmService {
                     }] :
                     [])
             ],
-            max_tokens: req.params?.maxTokens || this.DEFAULT_MAX_TOKENS,
+            max_tokens: maxTokens,
             temperature: req.params?.temperature,
             top_p: req.params?.topP,
             top_k: req.params?.topK,
@@ -128,6 +132,7 @@ const models = [
         id: 'claude-opus-4-20250514',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 4096,
         pricing: {
             input_tokens: 15.00,
             completion_tokens: 75.00,
@@ -139,6 +144,7 @@ const models = [
         id: 'claude-sonnet-4-20250514',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 8192,
         pricing: {
             input_tokens: 3.00,
             completion_tokens: 15.00,
@@ -150,6 +156,7 @@ const models = [
         id: 'claude-3-7-sonnet-20250219',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 8192,
         pricing: {
             input_tokens: 3.00,
             completion_tokens: 15.00,
@@ -161,6 +168,7 @@ const models = [
         id: 'claude-3-5-sonnet-20241022',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 8192,
         pricing: {
             input_tokens: 3.00,
             completion_tokens: 15.00,
@@ -172,6 +180,7 @@ const models = [
         id: 'claude-3-5-haiku-20241022',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 8192,
         pricing: {
             input_tokens: 0.80,
             completion_tokens: 4.00,
@@ -183,6 +192,7 @@ const models = [
         id: 'claude-3-5-sonnet-20240620',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 8192,
         pricing: {
             input_tokens: 3.00,
             completion_tokens: 15.00,
@@ -194,6 +204,7 @@ const models = [
         id: 'claude-3-haiku-20240307',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 4096,
         pricing: {
             input_tokens: 0.25,
             completion_tokens: 1.25,

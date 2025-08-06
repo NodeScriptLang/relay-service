@@ -7,6 +7,7 @@ export class XAiLlmService extends LlmService {
 
     @config() LLM_XAI_API_KEY!: string;
     @config({ default: 'https://api.x.ai/v1/' }) XAI_BASE_URL!: string;
+    @config({ default: 4096 }) DEFAULT_MAX_TOKENS!: number;
 
     getModels() {
         return models;
@@ -127,7 +128,7 @@ export class XAiLlmService extends LlmService {
                     }] :
                     [])
             ],
-            max_tokens: req.params?.maxTokens,
+            max_tokens: req.params?.maxTokens || this.DEFAULT_MAX_TOKENS,
             temperature: req.params?.temperature,
             top_p: req.params?.topP,
             stop: req.params?.stopSequences,
