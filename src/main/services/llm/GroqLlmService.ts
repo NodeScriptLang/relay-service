@@ -7,6 +7,7 @@ export class GroqLlmService extends LlmService {
 
     @config() LLM_GROQ_API_KEY!: string;
     @config({ default: 'https://api.groq.com/openai/v1/' }) GROQ_BASE_URL!: string;
+    @config({ default: 8192 }) DEFAULT_MAX_TOKENS!: number;
 
     getModels() {
         return models;
@@ -110,7 +111,7 @@ export class GroqLlmService extends LlmService {
                     }] :
                     [])
             ],
-            max_completion_tokens: req.params?.maxTokens,
+            max_completion_tokens: req.params?.maxTokens || this.DEFAULT_MAX_TOKENS,
             temperature: req.params?.temperature,
             top_p: req.params?.topP,
             stop: req.params?.stopSequences,

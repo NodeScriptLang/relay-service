@@ -8,6 +8,7 @@ export class DeepseekLlmService extends LlmService {
     @config() LLM_DEEPSEEK_API_KEY!: string;
     @config({ default: 'https://api.deepseek.com/v1/' }) DEEPSEEK_BASE_URL!: string;
     @config({ default: 1_000_000 }) DEEPSEEK_PRICE_PER_TOKENS!: number;
+    @config({ default: 4096 }) DEFAULT_MAX_TOKENS!: number;
 
     getModels() {
         return models;
@@ -109,7 +110,7 @@ export class DeepseekLlmService extends LlmService {
                     }] :
                     [])
             ],
-            max_tokens: req.params?.maxTokens,
+            max_tokens: req.params?.maxTokens || this.DEFAULT_MAX_TOKENS,
             temperature: req.params?.temperature,
             top_p: req.params?.topP,
             top_k: req.params?.topK,

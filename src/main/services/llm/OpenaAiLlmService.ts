@@ -7,6 +7,7 @@ export class OpenaAiLlmService extends LlmService {
 
     @config() LLM_OPENAI_API_KEY!: string;
     @config({ default: 'https://api.openai.com/v1/' }) OPENAI_BASE_URL!: string;
+    @config({ default: 4096 }) DEFAULT_MAX_TOKENS!: number;
 
     getModels() {
         return models;
@@ -127,6 +128,10 @@ export class OpenaAiLlmService extends LlmService {
         if ('data' in req) {
             data = JSON.stringify(req.data);
         }
+
+        const model = models.find(m => m.id === req.model);
+        const maxTokens = req.params?.maxTokens || (model?.maxOutputTokens ? Math.min(this.DEFAULT_MAX_TOKENS, model.maxOutputTokens) : this.DEFAULT_MAX_TOKENS);
+
         return {
             model: req.model,
             messages: [
@@ -145,7 +150,7 @@ export class OpenaAiLlmService extends LlmService {
                     }] :
                     [])
             ],
-            max_tokens: req.params?.maxTokens,
+            max_tokens: maxTokens,
             temperature: req.params?.temperature,
             top_p: req.params?.topP,
             stop: req.params?.stopSequences,
@@ -202,6 +207,7 @@ const models = [
         id: 'gpt-4o',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 16384,
         pricing: {
             input_tokens: 2.50,
             cached_input_tokens: 1.25,
@@ -212,6 +218,7 @@ const models = [
         id: 'gpt-4o-mini',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 16384,
         pricing: {
             input_tokens: 0.15,
             cached_input_tokens: 0.075,
@@ -222,6 +229,7 @@ const models = [
         id: 'gpt-4-turbo',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 4096,
         pricing: {
             input_tokens: 0.03,
             cached_input_tokens: 0.015,
@@ -232,6 +240,7 @@ const models = [
         id: 'gpt-3.5-turbo',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 4096,
         pricing: {
             input_tokens: 0.015,
             cached_input_tokens: 0.0075,
@@ -242,6 +251,7 @@ const models = [
         id: 'o1-preview',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 32768,
         pricing: {
             input_tokens: 15.00,
             cached_input_tokens: 7.50,
@@ -252,6 +262,7 @@ const models = [
         id: 'o1-mini',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 65536,
         pricing: {
             input_tokens: 3.00,
             cached_input_tokens: 1.50,
@@ -262,6 +273,7 @@ const models = [
         id: 'o3',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 100000,
         pricing: {
             input_tokens: 15.00,
             cached_input_tokens: 7.50,
@@ -272,6 +284,7 @@ const models = [
         id: 'o4-mini',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 65536,
         pricing: {
             input_tokens: 3.00,
             cached_input_tokens: 1.50,
@@ -282,6 +295,7 @@ const models = [
         id: 'gpt-4.1',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 16384,
         pricing: {
             input_tokens: 5.00,
             cached_input_tokens: 2.50,
@@ -292,6 +306,7 @@ const models = [
         id: 'gpt-4.1-mini',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 16384,
         pricing: {
             input_tokens: 0.50,
             cached_input_tokens: 0.25,
@@ -302,6 +317,7 @@ const models = [
         id: 'gpt-4.1-nano',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
+        maxOutputTokens: 16384,
         pricing: {
             input_tokens: 0.25,
             cached_input_tokens: 0.125,

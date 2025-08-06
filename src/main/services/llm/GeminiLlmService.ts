@@ -7,6 +7,7 @@ export class GeminiLlmService extends LlmService {
 
     @config() LLM_GEMINI_API_KEY!: string;
     @config({ default: 'https://generativelanguage.googleapis.com/v1beta/' }) GEMINI_BASE_URL!: string;
+    @config({ default: 8192 }) DEFAULT_MAX_TOKENS!: number;
 
     getModels() {
         return models;
@@ -145,7 +146,7 @@ export class GeminiLlmService extends LlmService {
             ],
             generationConfig: {
                 responseModalities: ['Text'],
-                maxOutputTokens: req.params?.maxTokens,
+                maxOutputTokens: req.params?.maxTokens || this.DEFAULT_MAX_TOKENS,
                 temperature: req.params?.temperature,
                 top_p: req.params?.topP,
                 top_k: req.params?.topK,
