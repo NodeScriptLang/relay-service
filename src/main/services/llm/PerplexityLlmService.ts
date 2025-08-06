@@ -168,8 +168,8 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
-            per_token_input: 1.0,
-            per_token_output: 1.0,
+            per_token_input: 1.33,
+            per_token_output: 1.33,
             per_request: 0.005
         }
     },
@@ -178,8 +178,8 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
-            per_token_input: 3.0,
-            per_token_output: 15.0,
+            per_token_input: 4.0,
+            per_token_output: 20.0,
             per_request: 0.005
         }
     },
