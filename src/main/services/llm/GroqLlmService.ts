@@ -290,15 +290,6 @@ const models = [
         }
     },
     {
-        id: 'mixtral-8x7b-32768',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.24,
-            output_tokens: 0.24
-        }
-    },
-    {
         id: 'qwen-2.5-32b',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,

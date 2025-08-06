@@ -125,7 +125,7 @@ export class AnthropicLlmService extends LlmService {
 // For more details on pricing, see: https://www.anthropic.com/pricing#anthropic-api
 const models = [
     {
-        id: 'claude-opus-4',
+        id: 'claude-opus-4-20250514',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
@@ -136,7 +136,7 @@ const models = [
         }
     },
     {
-        id: 'claude-sonnet-4',
+        id: 'claude-sonnet-4-20250514',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
