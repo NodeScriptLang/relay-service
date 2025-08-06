@@ -153,11 +153,10 @@ export class OpenaAiLlmService extends LlmService {
 
         const model = models.find(m => m.id === req.model);
         const maxTokens = req.params?.maxTokens || (model?.maxOutputTokens ? Math.min(this.DEFAULT_MAX_TOKENS, model.maxOutputTokens) : this.DEFAULT_MAX_TOKENS);
+        const supportsSystemMessages = model?.supportsSystemMessages !== false;
+        const usesCompletionTokens = model?.usesCompletionTokens === true;
 
-        // o1 models don't support system messages
-        const isO1Model = req.model.startsWith('o1-') || req.model.startsWith('o3') || req.model.startsWith('o4-');
-
-        const messages = isO1Model ?
+        const messages = !supportsSystemMessages ?
             [
                 {
                     role: 'user',
@@ -201,8 +200,8 @@ export class OpenaAiLlmService extends LlmService {
             stream: req.params?.stream
         };
 
-        // o4-mini and gpt-4.1 series use max_completion_tokens, others use max_tokens
-        if (req.model === 'o4-mini' || req.model.startsWith('gpt-4.1')) {
+        // Some models use max_completion_tokens, others use max_tokens
+        if (usesCompletionTokens) {
             body.max_completion_tokens = maxTokens;
         } else {
             body.max_tokens = maxTokens;
@@ -300,6 +299,8 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         maxOutputTokens: 32768,
+        supportsSystemMessages: false,
+        usesCompletionTokens: true,
         pricing: {
             input_tokens: 15.00,
             cached_input_tokens: 7.50,
@@ -311,6 +312,8 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         maxOutputTokens: 65536,
+        supportsSystemMessages: false,
+        usesCompletionTokens: true,
         pricing: {
             input_tokens: 3.00,
             cached_input_tokens: 1.50,
@@ -322,6 +325,8 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         maxOutputTokens: 100000,
+        supportsSystemMessages: false,
+        usesCompletionTokens: true,
         pricing: {
             input_tokens: 15.00,
             cached_input_tokens: 7.50,
@@ -333,6 +338,8 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         maxOutputTokens: 65536,
+        supportsSystemMessages: false,
+        usesCompletionTokens: true,
         pricing: {
             input_tokens: 3.00,
             cached_input_tokens: 1.50,
@@ -344,6 +351,7 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         maxOutputTokens: 16384,
+        usesCompletionTokens: true,
         pricing: {
             input_tokens: 5.00,
             cached_input_tokens: 2.50,
@@ -355,6 +363,7 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         maxOutputTokens: 16384,
+        usesCompletionTokens: true,
         pricing: {
             input_tokens: 0.50,
             cached_input_tokens: 0.25,
@@ -366,6 +375,7 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         maxOutputTokens: 16384,
+        usesCompletionTokens: true,
         pricing: {
             input_tokens: 0.25,
             cached_input_tokens: 0.125,
