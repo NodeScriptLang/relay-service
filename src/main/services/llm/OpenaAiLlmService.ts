@@ -38,14 +38,36 @@ export class OpenaAiLlmService extends LlmService {
     }
 
     async generateImage(req: LlmGenerateImage): Promise<LlmCompleteResponse> {
-        const body = this.formatImageRequestBody(req);
-        const res = await this.request('images/generations', 'POST', body);
-        const json = await res.json();
-        return {
-            content: json.data[0].b64_json || json.data[0].url,
-            fullResponse: json,
-            status: res.status,
-        };
+        if (req.model === 'gpt-image-1') {
+            // GPT-image-1 uses chat completions endpoint, not images/generations
+            const body = {
+                model: req.model,
+                messages: [
+                    {
+                        role: 'user',
+                        content: req.prompt
+                    }
+                ],
+                max_tokens: 4096
+            };
+            const res = await this.request('chat/completions', 'POST', body);
+            const json = await res.json();
+            return {
+                content: json.choices[0].message.content,
+                fullResponse: json,
+                status: res.status,
+            };
+        } else {
+            // DALL-E models use images/generations endpoint
+            const body = this.formatImageRequestBody(req);
+            const res = await this.request('images/generations', 'POST', body);
+            const json = await res.json();
+            return {
+                content: json.data[0].b64_json || json.data[0].url,
+                fullResponse: json,
+                status: res.status,
+            };
+        }
     }
 
     calculateCost(modelId: string, json: Record<string, any>, params: Record<string, any>): number {
@@ -132,9 +154,23 @@ export class OpenaAiLlmService extends LlmService {
         const model = models.find(m => m.id === req.model);
         const maxTokens = req.params?.maxTokens || (model?.maxOutputTokens ? Math.min(this.DEFAULT_MAX_TOKENS, model.maxOutputTokens) : this.DEFAULT_MAX_TOKENS);
 
-        return {
-            model: req.model,
-            messages: [
+        // o1 models don't support system messages
+        const isO1Model = req.model.startsWith('o1-') || req.model.startsWith('o3') || req.model.startsWith('o4-');
+
+        const messages = isO1Model ?
+            [
+                {
+                    role: 'user',
+                    content: req.system ? `${req.system}\n\n${req.prompt}` : req.prompt,
+                },
+                ...(data ?
+                    [{
+                        role: 'user',
+                        content: data
+                    }] :
+                    [])
+            ] :
+            [
                 {
                     role: 'system',
                     content: req.system,
@@ -149,8 +185,11 @@ export class OpenaAiLlmService extends LlmService {
                         content: data
                     }] :
                     [])
-            ],
-            max_tokens: maxTokens,
+            ];
+
+        const body: any = {
+            model: req.model,
+            messages: messages,
             temperature: req.params?.temperature,
             top_p: req.params?.topP,
             stop: req.params?.stopSequences,
@@ -161,6 +200,15 @@ export class OpenaAiLlmService extends LlmService {
             seed: req.params?.seed,
             stream: req.params?.stream
         };
+
+        // o4-mini and gpt-4.1 series use max_completion_tokens, others use max_tokens
+        if (req.model === 'o4-mini' || req.model.startsWith('gpt-4.1')) {
+            body.max_completion_tokens = maxTokens;
+        } else {
+            body.max_tokens = maxTokens;
+        }
+
+        return body;
     }
 
     private formatImageRequestBody(req: LlmGenerateImage): Record<string, any> {
