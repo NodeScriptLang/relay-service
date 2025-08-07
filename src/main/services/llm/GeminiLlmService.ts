@@ -38,6 +38,12 @@ export class GeminiLlmService extends LlmService {
     }
 
     async generateImage(req: LlmGenerateImage): Promise<LlmCompleteResponse> {
+        // Check if this is an Imagen model
+        if (req.model.startsWith('imagen-')) {
+            return this.generateImageWithImagen(req);
+        }
+
+        // Standard Gemini image generation
         const body = this.formatImageRequestBody(req);
         const res = await this.request('generateContent', req.model, 'POST', body);
         const json = await res.json();
@@ -46,6 +52,26 @@ export class GeminiLlmService extends LlmService {
         const content = candidate.content;
         const imagePart = content.parts.find((part: any) => part.inlineData);
         const imageData = imagePart ? imagePart.inlineData.data : null;
+
+        return {
+            content: imageData,
+            fullResponse: json,
+            status: res.status,
+        };
+    }
+
+    private async generateImageWithImagen(req: LlmGenerateImage): Promise<LlmCompleteResponse> {
+        const body = {
+            prompt: req.prompt,
+            sampleCount: req.params?.n || 1,
+            model: req.model
+        };
+
+        const res = await this.request('generate', req.model, 'POST', body);
+        const json = await res.json();
+
+        // Imagen API returns images differently
+        const imageData = json.predictions?.[0]?.bytesBase64Encoded || json.images?.[0];
 
         return {
             content: imageData,
@@ -281,7 +307,7 @@ const models = [
         }
     },
     {
-        id: 'gemini-1.5-pro-001',
+        id: 'gemini-1.5-pro',
         tokenDivisor: 1_000_000,
         modelType: [LlmModelType.TEXT],
         pricing: {
@@ -325,7 +351,7 @@ const models = [
         }
     },
     {
-        id: 'gemini-1.5-flash-001',
+        id: 'gemini-1.5-flash',
         tokenDivisor: 1_000_000,
         modelType: [LlmModelType.TEXT],
         pricing: {
@@ -369,7 +395,7 @@ const models = [
         }
     },
     {
-        id: 'gemini-2.0-flash-001',
+        id: 'gemini-2.0-flash',
         tokenDivisor: 1_000_000,
         modelType: [LlmModelType.TEXT],
         pricing: {
@@ -386,24 +412,7 @@ const models = [
         }
     },
     {
-        id: 'gemini-2.0-flash-exp-image-generation',
-        tokenDivisor: 1_000_000,
-        modelType: [LlmModelType.IMAGE],
-        pricing: {
-            promptTokenCount: {
-                price: 0.10
-            },
-            candidatesTokenCount: {
-                price: 0.40
-            },
-            contextCachingTokenCount: {
-                price: 0.025
-            },
-            contextCachingStorage: 1.00
-        }
-    },
-    {
-        id: 'imagen-3',
+        id: 'imagen-3.0-generate-002',
         tokenDivisor: 1,
         modelType: [LlmModelType.IMAGE],
         pricing: {
@@ -411,11 +420,19 @@ const models = [
         }
     },
     {
-        id: 'imagen-4',
+        id: 'imagen-4.0-generate-preview-06-06',
         tokenDivisor: 1,
         modelType: [LlmModelType.IMAGE],
         pricing: {
             per_image: 0.04
+        }
+    },
+    {
+        id: 'imagen-4.0-ultra-generate-preview-06-06',
+        tokenDivisor: 1,
+        modelType: [LlmModelType.IMAGE],
+        pricing: {
+            per_image: 0.06
         }
     }
 ];
