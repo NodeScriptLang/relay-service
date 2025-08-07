@@ -183,15 +183,6 @@ const models = [
         }
     },
     {
-        id: 'grok-4-heavy',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            text_input: 10.00,
-            text_output: 30.00
-        }
-    },
-    {
         id: 'grok-3',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
