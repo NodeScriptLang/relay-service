@@ -174,21 +174,12 @@ interface ImageModel {
 // For more details on pricing, see: https://docs.x.ai/docs/models?cluster=us-east-1
 const models = [
     {
-        id: 'grok-4',
+        id: 'grok-4-0709',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
-            text_input: 5.00,
+            text_input: 3.00,
             text_output: 15.00
-        }
-    },
-    {
-        id: 'grok-4-heavy',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            text_input: 10.00,
-            text_output: 30.00
         }
     },
     {
@@ -197,7 +188,7 @@ const models = [
         tokenDivisor: 1_000_000,
         pricing: {
             text_input: 3.00,
-            text_output: 12.00
+            text_output: 15.00
         }
     },
     {
@@ -205,21 +196,30 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
-            text_input: 1.00,
-            text_output: 5.00
+            text_input: 0.30,
+            text_output: 0.50
         }
     },
     {
-        id: 'grok-2',
+        id: 'grok-3-fast',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
-            text_input: 2.00,
-            text_output: 10.00
+            text_input: 5.00,
+            text_output: 25.00
         }
     },
     {
-        id: 'grok-2-vision',
+        id: 'grok-3-mini-fast',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            text_input: 0.60,
+            text_output: 4.00
+        }
+    },
+    {
+        id: 'grok-2-vision-1212',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
@@ -229,26 +229,7 @@ const models = [
         }
     },
     {
-        id: 'grok-vision-beta',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            text_input: 5.00,
-            image_input: 5.00,
-            text_output: 15.00
-        }
-    },
-    {
-        id: 'grok-beta',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            text_input: 5.00,
-            text_output: 15.00
-        }
-    },
-    {
-        id: 'grok-2-image',
+        id: 'grok-2-image-1212',
         modelType: [LlmModelType.IMAGE],
         tokenDivisor: 1,
         pricing: {

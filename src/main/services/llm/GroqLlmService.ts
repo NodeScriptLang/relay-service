@@ -137,69 +137,7 @@ interface TextModel {
 
 // For more details on pricing, see: https://groq.com/pricing/
 const models = [
-    {
-        id: 'llama-4-scout',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 1.00,
-            output_tokens: 1.50
-        }
-    },
-    {
-        id: 'llama-4-maverick',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 1.50,
-            output_tokens: 2.00
-        }
-    },
-    {
-        id: 'llama-3.1-405b',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 3.00,
-            output_tokens: 3.00
-        }
-    },
-    {
-        id: 'llama-3.1-70b',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.59,
-            output_tokens: 0.79
-        }
-    },
-    {
-        id: 'llama-3.1-8b',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.05,
-            output_tokens: 0.08
-        }
-    },
-    {
-        id: 'kimi-k2',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 1.00,
-            output_tokens: 1.50
-        }
-    },
-    {
-        id: 'deepseek-r1-distill-llama-70b',
-        modelType: [LlmModelType.TEXT],
-        tokenDivisor: 1_000_000,
-        pricing: {
-            input_tokens: 0.75,
-            output_tokens: 0.99
-        }
-    },
+    // Production Models
     {
         id: 'gemma2-9b-it',
         modelType: [LlmModelType.TEXT],
@@ -228,21 +166,151 @@ const models = [
         }
     },
     {
-        id: 'llama3-70b-8192',
+        id: 'meta-llama/llama-guard-4-12b',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
-            input_tokens: 0.59,
-            output_tokens: 0.79
+            input_tokens: 0.20,
+            output_tokens: 0.20
         }
     },
     {
-        id: 'llama3-8b-8192',
+        id: 'whisper-large-v3',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.111,
+            output_tokens: 0.111
+        }
+    },
+    {
+        id: 'whisper-large-v3-turbo',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.04,
+            output_tokens: 0.04
+        }
+    },
+
+    // Preview Models
+    {
+        id: 'deepseek-r1-distill-llama-70b',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.75,
+            output_tokens: 0.99
+        }
+    },
+    {
+        id: 'meta-llama/llama-4-maverick-17b-128e-instruct',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 1.50,
+            output_tokens: 2.00
+        }
+    },
+    {
+        id: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 1.00,
+            output_tokens: 1.50
+        }
+    },
+    {
+        id: 'meta-llama/llama-prompt-guard-2-22m',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
             input_tokens: 0.05,
-            output_tokens: 0.08
+            output_tokens: 0.05
         }
     },
+    {
+        id: 'meta-llama/llama-prompt-guard-2-86m',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.10,
+            output_tokens: 0.10
+        }
+    },
+    {
+        id: 'moonshotai/kimi-k2-instruct',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 1.00,
+            output_tokens: 1.50
+        }
+    },
+    {
+        id: 'openai/gpt-oss-120b',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 2.00,
+            output_tokens: 3.00
+        }
+    },
+    {
+        id: 'openai/gpt-oss-20b',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.50,
+            output_tokens: 1.00
+        }
+    },
+    {
+        id: 'playai-tts',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.20,
+            output_tokens: 0.20
+        }
+    },
+    {
+        id: 'playai-tts-arabic',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.20,
+            output_tokens: 0.20
+        }
+    },
+    {
+        id: 'qwen/qwen3-32b',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 1.00,
+            output_tokens: 1.50
+        }
+    },
+
+    // Preview Systems
+    {
+        id: 'compound-beta',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 1.00,
+            output_tokens: 2.00
+        }
+    },
+    {
+        id: 'compound-beta-mini',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            input_tokens: 0.50,
+            output_tokens: 1.00
+        }
+    }
 ];

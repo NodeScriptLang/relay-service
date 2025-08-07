@@ -61,17 +61,23 @@ export class GeminiLlmService extends LlmService {
     }
 
     private async generateImageWithImagen(req: LlmGenerateImage): Promise<LlmCompleteResponse> {
+        // Imagen models use a different API format with instances and parameters
         const body = {
-            prompt: req.prompt,
-            sampleCount: req.params?.n || 1,
-            model: req.model
+            instances: [
+                {
+                    prompt: req.prompt
+                }
+            ],
+            parameters: {
+                sampleCount: req.params?.n || 1
+            }
         };
 
-        const res = await this.request('generate', req.model, 'POST', body);
+        const res = await this.request('predict', req.model, 'POST', body);
         const json = await res.json();
 
-        // Imagen API returns images differently
-        const imageData = json.predictions?.[0]?.bytesBase64Encoded || json.images?.[0];
+        // Imagen API returns predictions array with base64 encoded images
+        const imageData = json.predictions?.[0]?.bytesBase64Encoded;
 
         return {
             content: imageData,
