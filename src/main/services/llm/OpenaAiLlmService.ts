@@ -209,6 +209,39 @@ interface TextModel {
 // For more details on pricing, see: https://platform.openai.com/docs/pricing
 const models = [
     {
+        id: 'gpt-5',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        maxOutputTokens: 128000,
+        pricing: {
+            input_tokens: 1.25,
+            cached_input_tokens: 0.625,
+            output_tokens: 10.00
+        }
+    },
+    {
+        id: 'gpt-5-mini',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        maxOutputTokens: 128000,
+        pricing: {
+            input_tokens: 0.25,
+            cached_input_tokens: 0.125,
+            output_tokens: 2.00
+        }
+    },
+    {
+        id: 'gpt-5-nano',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        maxOutputTokens: 128000,
+        pricing: {
+            input_tokens: 0.05,
+            cached_input_tokens: 0.025,
+            output_tokens: 0.40
+        }
+    },
+    {
         id: 'gpt-4o',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
