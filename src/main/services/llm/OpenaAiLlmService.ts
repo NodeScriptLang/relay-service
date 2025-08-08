@@ -213,6 +213,7 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         maxOutputTokens: 128000,
+        usesCompletionTokens: true,
         pricing: {
             input_tokens: 1.25,
             cached_input_tokens: 0.625,
@@ -224,6 +225,7 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         maxOutputTokens: 128000,
+        usesCompletionTokens: true,
         pricing: {
             input_tokens: 0.25,
             cached_input_tokens: 0.125,
@@ -235,6 +237,7 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         maxOutputTokens: 128000,
+        usesCompletionTokens: true,
         pricing: {
             input_tokens: 0.05,
             cached_input_tokens: 0.025,
