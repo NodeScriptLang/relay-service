@@ -117,6 +117,8 @@ export class GroqLlmService extends LlmService {
             stop: req.params?.stopSequences,
             frequency_penalty: req.params?.frequencyPenalty,
             presence_penalty: req.params?.presencePenalty,
+            reasoning_effort: req.params?.thinking ? 'default' : 'none',
+            reasoning_format: req.params?.thinking ? 'parsed' : 'hidden',
             response_format: req.params?.responseFormat,
             seed: req.params?.seed,
             stream: req.params?.stream

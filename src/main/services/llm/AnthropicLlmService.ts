@@ -121,6 +121,9 @@ export class AnthropicLlmService extends LlmService {
             stop_sequences: req.params?.stopSequences,
             stream: req.params?.stream,
             system: req.system,
+            thinking: {
+                type: req.params?.thinking ? 'enabled' : 'disabled'
+            }
         };
     }
 
