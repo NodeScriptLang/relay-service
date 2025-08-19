@@ -134,7 +134,7 @@ export class XAiLlmService extends LlmService {
             stop: req.params?.stopSequences,
             frequency_penalty: req.params?.frequencyPenalty,
             presence_penalty: req.params?.presencePenalty,
-            reasoning_effort: 'low',
+            reasoning_effort: req.params?.thinking ? 'high' : 'low',
             response_format: req.params?.responseFormat,
             seed: req.params?.seed,
             stream: req.params?.stream

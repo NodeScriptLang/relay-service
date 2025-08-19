@@ -184,7 +184,7 @@ export class GeminiLlmService extends LlmService {
                 top_k: req.params?.topK,
                 stop_sequences: req.params?.stopSequences,
                 thinkingConfig: {
-                    thinkingBudget: 0
+                    thinkingBudget: req.params?.thinking ? -1 : 0
                 }
             }
         };

@@ -122,7 +122,7 @@ export class AnthropicLlmService extends LlmService {
             stream: req.params?.stream,
             system: req.system,
             thinking: {
-                type: 'disabled'
+                type: req.params?.thinking ? 'enabled' : 'disabled'
             }
         };
     }

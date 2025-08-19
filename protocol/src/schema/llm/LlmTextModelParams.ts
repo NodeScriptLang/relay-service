@@ -14,6 +14,7 @@ export interface LlmTextModelParams {
     candidateCount?: number;
     seed?: number;
     stream?: boolean;
+    thinking?: boolean;
 
     // Perplexity-specific parameters
     web_search?: boolean;
@@ -81,6 +82,11 @@ export const LlmTextModelParamsSchema = new Schema<LlmTextModelParams>({
         stream: {
             type: 'boolean',
             optional: true,
+        },
+        thinking: {
+            type: 'boolean',
+            optional: true,
+            default: false,
         },
         // Perplexity-specific parameters
         web_search: {
