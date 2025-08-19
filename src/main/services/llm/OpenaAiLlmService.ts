@@ -165,7 +165,8 @@ export class OpenaAiLlmService extends LlmService {
             logit_bias: req.params?.logitBias,
             response_format: req.params?.responseFormat,
             seed: req.params?.seed,
-            stream: req.params?.stream
+            stream: req.params?.stream,
+            reasoning_effort: 'minimal'
         };
 
         // Some models use max_completion_tokens, others use max_tokens
