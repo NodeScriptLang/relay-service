@@ -121,16 +121,27 @@ export class DeepseekLlmService extends LlmService {
 
 }
 
-// Simplified pricing, check https://api-docs.deepseek.com/quick_start/pricing for more details
+// Updated pricing for DeepSeek-V3.1 (effective September 4, 2025, 16:00 UTC)
+// Check https://api-docs.deepseek.com/quick_start/pricing for more details
 const models = [
+    {
+        id: 'deepseek-v3.1',
+        modelType: [LlmModelType.TEXT],
+        tokenDivisor: 1_000_000,
+        pricing: {
+            prompt_cache_hit_tokens: 0.07,
+            prompt_cache_miss_tokens: 0.56,
+            completion_tokens: 1.12
+        }
+    },
     {
         id: 'deepseek-chat',
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
             prompt_cache_hit_tokens: 0.07,
-            prompt_cache_miss_tokens: 0.27,
-            completion_tokens: 1.10
+            prompt_cache_miss_tokens: 0.56,
+            completion_tokens: 1.12
         }
     },
     {
@@ -138,9 +149,9 @@ const models = [
         modelType: [LlmModelType.TEXT],
         tokenDivisor: 1_000_000,
         pricing: {
-            prompt_cache_hit_tokens: 0.14,
-            prompt_cache_miss_tokens: 0.55,
-            completion_tokens: 2.19
+            prompt_cache_hit_tokens: 0.07,
+            prompt_cache_miss_tokens: 0.56,
+            completion_tokens: 1.12
         }
     }
 ];
