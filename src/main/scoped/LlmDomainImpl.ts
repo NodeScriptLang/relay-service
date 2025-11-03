@@ -179,6 +179,10 @@ export class LlmDomainImpl implements LlmDomain {
         if (workspace.metadata.llmRateLimit) {
             rateLimit = workspace.metadata.llmRateLimit;
         }
+        // TODO: temporary workaround — raise rate limit for HU workspace - remove later
+        if (workspaceId === 'oPZ2pGPNKwnhW5tW') {
+            rateLimit = 2000;
+        }
         const date = getDate();
         const hour = getHour();
         const key = `Relay:llm:rateLimit:${workspaceId}:${date}:${hour}`;
